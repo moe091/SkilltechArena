@@ -22,8 +22,8 @@ public class PlayerController : MonoBehaviour
 
     void FixedUpdate()
     {
-        _inputCollector.GatherInput();
-        var input = _inputCollector.CurrentInput;
+        //var input = _inputCollector.CurrentInput;
+        //_inputCollector.RetrieveInput();
 
         // Store input for future replay
         //_inputBuffer.Push(input);
@@ -45,9 +45,4 @@ public class PlayerController : MonoBehaviour
     }
 
 
-
-    public void TryFire(int tick, float angle)
-    {
-        _weaponController.TryFire(tick, angle);
-    }
 }

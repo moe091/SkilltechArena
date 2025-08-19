@@ -35,27 +35,25 @@ public class WeaponController : NetworkBehaviour
     {
         if (weapon == null) return;
 
-        Debug.Log($"[Server] Equipping {weapon.name}. Current equippedId: {_equippedId.Value}");
         _equippedId.Value = weapon.weaponId;   // triggers OnEquippedIdChanged everywhere
-        Debug.Log($"[Server] New equippedId: {_equippedId.Value}");
 
         // Server initializes authoritative state
         curAmmo = weapon.maxAmmo;
         nextAllowedFireTick = 0;
     }
 
-    public void TryFire(int tick, float angleDegrees)
+    public Vector2 TryFire(int tick, float angleDegrees, ref Vector2 currentVel)
     {
         if (curWeapon == null)
         {
             Debug.Log("Can't Fire - no weapon equipped");
-            return;
+            return Vector2.zero;
         }
 
         // Tick-gated rate of fire & ammo (basic MVP gating)
         int fireInterval = curWeapon.GetFireIntervalTicks(TimeManager.TickRate);
-        if (tick < nextAllowedFireTick || curAmmo <= 0)
-            return;
+        //if (tick < nextAllowedFireTick || curAmmo <= 0)
+            //return Vector2.zero;
 
         nextAllowedFireTick = tick + fireInterval;
         curAmmo--;
@@ -66,15 +64,19 @@ public class WeaponController : NetworkBehaviour
 
         // Forward to runtime behavior (Shotgun)
         if (_weapon != null)
-            _weapon.TryFire(tick, aimDir.normalized);
+        {
+            return _weapon.TryFire(tick, aimDir.normalized, ref currentVel);
+        }
         else
+        {
             Debug.LogWarning("No IWeaponRuntime found on weapon view prefab.");
+            return Vector2.zero;
+        }
     }
 
     // v4 OnChange signature: (prev, next, asServer)
     private void OnEquippedIdChanged(WeaponId prev, WeaponId next, bool asServer)
     {
-        Debug.Log("OnEquppiedIdChanged Called!");
         // Resolve the actual ScriptableObject locally
         var db = WeaponDatabase.Load();
         curWeapon = db ? db.Get(next) : null;

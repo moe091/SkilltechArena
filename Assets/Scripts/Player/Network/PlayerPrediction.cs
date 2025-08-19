@@ -3,6 +3,7 @@ using FishNet.Transporting;
 using FishNet.Utility.Template;
 using System.Collections;
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 
 public class PlayerPrediction : TickNetworkBehaviour
@@ -51,6 +52,7 @@ public class PlayerPrediction : TickNetworkBehaviour
     private PredictionRigidbody2D _predictionBody = new();
 
     private PlayerController _playerController;
+    private WeaponController _weaponController;
 
 
     private void Awake()
@@ -59,6 +61,7 @@ public class PlayerPrediction : TickNetworkBehaviour
         rb = GetComponent<Rigidbody2D>();
         _predictionBody.Initialize(rb); // important: initialize with Rigidbody2D
         _playerController = GetComponent<PlayerController>();
+        _weaponController = GetComponent<WeaponController>();
     }
 
     public override void OnStartNetwork()
@@ -88,14 +91,12 @@ public class PlayerPrediction : TickNetworkBehaviour
 
     protected override void TimeManager_OnTick()
     {
-        //Debug.Log("TimeManager.OnTick - CALLED!");
         // Only the owner should produce inputs; others will receive state
         if (IsOwner) {
-            //Debug.Log("IS OWNER, GATHERING INPUT");
             _inputCollector.GatherInput();
         } else
         {
-            //Debug.Log("NOT OWNER!");
+
         }
             
         var input = IsOwner ? _inputCollector.RetrieveInput() : default; // PlayerInputData (IReplicateData)
@@ -119,6 +120,9 @@ public class PlayerPrediction : TickNetworkBehaviour
                               Channel channel = Channel.Unreliable)
     {
         _lastReplicateTick = input.GetTick();
+        int rdTick = unchecked((int)_lastReplicateTick);
+
+
         float dt = (float)TimeManager.TickDelta;
 
         // Only the server and the local owner should simulate.
@@ -130,12 +134,6 @@ public class PlayerPrediction : TickNetworkBehaviour
 
 
         float angle = input.lookAngleDeg; // from your input
-
-        if (input.attack1Pressed)
-        {
-            Debug.Log("ATTACK 1 PRESSED");
-            _playerController.TryFire((int)TimeManager.LocalTick, angle);
-        }
 
         facing = Mathf.Abs(angle) > 90f ? -1 : 1;
         var s = transform.localScale;
@@ -168,6 +166,13 @@ public class PlayerPrediction : TickNetworkBehaviour
 
         // Start from current predicted velocity
         Vector2 currentVel = rb.velocity;
+
+        if (input.attack1Pressed)
+        {
+            Debug.Log("attack1Pressed - " + (IsOwner ? "(OWNER)" : "") + " - " + (IsServerStarted ? "(SERVER)" : ""));
+            Vector2 recoilForce = _weaponController.TryFire(rdTick, input.lookAngleDeg, ref currentVel);
+            //currentVel += new Vector2(9, 29); INLINE RECOIL APPLIED OUTSIDE OF 'if (recoilForce != Vector2.zero)' - THIS WORKS SMOOTHLY WHEN UNCOMMENTED
+        }
 
         // --- Dash ---
         if (dashTimer <= 0f && input.dashPressed)

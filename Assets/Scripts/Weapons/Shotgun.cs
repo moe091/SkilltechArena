@@ -1,3 +1,5 @@
+using FishNet;
+using FishNet.Managing.Predicting;
 using FishNet.Object;           // to access controller.ServerManager, controller.NetworkObject
 using UnityEngine;
 
@@ -13,9 +15,27 @@ public class Shotgun : MonoBehaviour, IWeapon
     [SerializeField] private float spreadDegrees = 30f;      // full cone width (e.g., 12° => ±6°)
     [SerializeField] private float speedVariance = 3f;      // full cone width (e.g., 12° => ±6°)
     [SerializeField] private float muzzleBackOffset = 0f;    // push muzzle slightly back if needed
+    [SerializeField] private float recoilForce = 20f;    // push muzzle slightly back if needed
+    [SerializeField] private int cooldown = 70;    // push muzzle slightly back if needed
+
+    private int lastShotTick = 0;
+
 
     // Injected at runtime
     private WeaponController _controller;
+    private Animator _animator;
+    [SerializeField] private AudioClip shootSfx;
+    private AudioSource _audioSource;
+    private PredictionManager _predict;
+
+
+    private void Awake()
+    {
+        _animator = GetComponent<Animator>();
+        _audioSource = GetComponent<AudioSource>();
+        _predict = InstanceFinder.PredictionManager;
+    }
+
 
     public void Initialize(WeaponController controller)
     {
@@ -27,9 +47,8 @@ public class Shotgun : MonoBehaviour, IWeapon
     /// Called by WeaponController after it has passed ROF/ammo gating.
     /// Owner can show VFX immediately; server actually spawns pellets.
     /// </summary>
-    public void TryFire(int tick, Vector2 aimDir)
+    public Vector2 TryFire(int tick, Vector2 aimDir, ref Vector2 currentVel) 
     {
-        Debug.Log("SHOTGUN FIRE");
         if (_controller == null)
         {
             Debug.LogError("[Shotgun] TryFire failed - _controller is null");
@@ -42,8 +61,46 @@ public class Shotgun : MonoBehaviour, IWeapon
         }
 
         // SERVER: spawn pellets
-        if (_controller.IsServer)
-            Server_SpawnPellets(aimDir.normalized);
+        
+        
+        
+        if (tick - lastShotTick > cooldown && (_controller.IsServerInitialized || _controller.IsOwner))
+        //if (_controller.IsServerInitialized || _controller.IsOwner)
+        {
+            if (_controller.IsServerInitialized)
+                Server_SpawnPellets(aimDir.normalized);
+            
+            Vector2 recoilVector = aimDir.normalized * -recoilForce;
+            float yRecoil = recoilVector.y;
+            float xRecoil = recoilVector.x;
+
+            float yDamper = currentVel.y * -0.5f;
+            yRecoil = yRecoil + yDamper;
+
+            currentVel += new Vector2(xRecoil, yRecoil);
+
+            if (shootSfx != null && _audioSource != null)
+                _audioSource.PlayOneShot(shootSfx);
+
+            if (_animator != null)
+            {
+                _animator.ResetTrigger("Shoot");
+                _animator.SetTrigger("Shoot");
+            }
+            else
+            {
+                Debug.LogWarning("[Shotgun] Animator component is null, can't play shoot animation!");
+            }
+
+            lastShotTick = tick;
+
+        } else
+        {
+
+        }
+
+            return (aimDir.normalized * -recoilForce);
+
     }
 
     private void Server_SpawnPellets(Vector2 baseDir)
@@ -65,8 +122,6 @@ public class Shotgun : MonoBehaviour, IWeapon
         // Simple MVP random spread (you can switch to deterministic later)
         for (int i = 0; i < count; i++)
         {
-
-            Debug.Log("Spawning pellet " + i);
             float offset = Random.Range(-half, half);
             Vector2 dir = Quaternion.Euler(0f, 0f, offset) * baseDir;
             Vector2 vel = dir * (projectileSpeed + Random.Range(-speedVariance, speedVariance));
@@ -82,4 +137,5 @@ public class Shotgun : MonoBehaviour, IWeapon
             proj.Init(_controller.NetworkObject, muzzlePos, vel, ignoreCol);
         }
     }
+
 }

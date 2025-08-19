@@ -37,7 +37,6 @@ public class Bullet : NetworkBehaviour
         _rb = GetComponent<Rigidbody2D>();
         _col = GetComponent<Collider2D>();
 
-        Debug.Log("CREATED BULLET");
         // Recommended RB2D defaults for net projectiles
         _rb.gravityScale = 0f;
         _rb.interpolation = RigidbodyInterpolation2D.None; // server drives state; clients interpolate via net
@@ -55,7 +54,6 @@ public class Bullet : NetworkBehaviour
     [Server]
     public void Init(NetworkObject owner, Vector2 worldPosition, Vector2 initialVelocity, Collider2D ignore)
     {
-        Debug.Log("INIT BULLET");
         _owner = owner;
 
         transform.position = worldPosition;
@@ -75,7 +73,6 @@ public class Bullet : NetworkBehaviour
         // Only the server decides when to despawn
         if (IsServer && base.TimeManager.Tick >= _despawnTick)
         {
-            Debug.Log("DESPAWN BULLET");
             Despawn();
         }
     }
@@ -99,7 +96,6 @@ public class Bullet : NetworkBehaviour
         if (despawnOnImpact)
         {
             Despawn();
-            Debug.Log("Despawn Bullet on Impact");
         }
     }
 
