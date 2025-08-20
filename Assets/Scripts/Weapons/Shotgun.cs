@@ -18,7 +18,7 @@ public class Shotgun : MonoBehaviour, IWeapon
     [SerializeField] private float recoilForce = 20f;    // push muzzle slightly back if needed
     [SerializeField] private int cooldown = 70;    // push muzzle slightly back if needed
 
-    private int lastShotTick = 0;
+    private int _lastShotTick = 0;
 
 
     // Injected at runtime
@@ -64,8 +64,8 @@ public class Shotgun : MonoBehaviour, IWeapon
         
         
         
-        if (tick - lastShotTick > cooldown && (_controller.IsServerInitialized || _controller.IsOwner))
-        //if (_controller.IsServerInitialized || _controller.IsOwner)
+        //if (tick - lastShotTick > cooldown && (_controller.IsServerInitialized || _controller.IsOwner))
+        if (_controller.IsServerInitialized || _controller.IsOwner)
         {
             if (_controller.IsServerInitialized)
                 Server_SpawnPellets(aimDir.normalized);
@@ -79,10 +79,10 @@ public class Shotgun : MonoBehaviour, IWeapon
 
             currentVel += new Vector2(xRecoil, yRecoil);
 
-            if (shootSfx != null && _audioSource != null)
+            if (shootSfx != null && _audioSource != null && _lastShotTick != tick)
                 _audioSource.PlayOneShot(shootSfx);
 
-            if (_animator != null)
+            if (_animator != null && _lastShotTick != tick)
             {
                 _animator.ResetTrigger("Shoot");
                 _animator.SetTrigger("Shoot");
@@ -92,7 +92,7 @@ public class Shotgun : MonoBehaviour, IWeapon
                 Debug.LogWarning("[Shotgun] Animator component is null, can't play shoot animation!");
             }
 
-            lastShotTick = tick;
+            _lastShotTick = tick;
 
         } else
         {

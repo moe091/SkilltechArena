@@ -10,7 +10,6 @@ public class PlayerPrediction : TickNetworkBehaviour
 {
     private PlayerInputCollector _inputCollector;
 
-
     [Header("Horizontal Movement")]
     public float maxMoveSpeed = 8f;
     public float acceleration = 40f;
@@ -37,6 +36,7 @@ public class PlayerPrediction : TickNetworkBehaviour
 
     [Header("Weapon")]
     public Transform _weaponSlot;
+    public float shotCooldown = 1f;
 
     private Rigidbody2D rb;
 
@@ -46,6 +46,7 @@ public class PlayerPrediction : TickNetworkBehaviour
     private float coyoteTimer;
     private float jumpBufferTimer;
     private float dashTimer;
+    private float shootTimer;
     private int facing = 1;               // -1 left, +1 right
 
     private uint _lastReplicateTick;
@@ -167,12 +168,13 @@ public class PlayerPrediction : TickNetworkBehaviour
         // Start from current predicted velocity
         Vector2 currentVel = rb.velocity;
 
-        if (input.attack1Pressed)
+        // FIRE gate based on predicted tick cooldown
+        if (shootTimer <= 0f && input.attack1Pressed)
         {
-            Debug.Log("attack1Pressed - " + (IsOwner ? "(OWNER)" : "") + " - " + (IsServerStarted ? "(SERVER)" : ""));
-            Vector2 recoilForce = _weaponController.TryFire(rdTick, input.lookAngleDeg, ref currentVel);
-            //currentVel += new Vector2(9, 29); INLINE RECOIL APPLIED OUTSIDE OF 'if (recoilForce != Vector2.zero)' - THIS WORKS SMOOTHLY WHEN UNCOMMENTED
+            shootTimer = shotCooldown;
+            _weaponController.TryFire(rdTick, input.lookAngleDeg, ref currentVel);
         }
+        if (shootTimer > 0f) shootTimer -= dt;
 
         // --- Dash ---
         if (dashTimer <= 0f && input.dashPressed)
@@ -240,6 +242,7 @@ public class PlayerPrediction : TickNetworkBehaviour
             coyoteTimer,
             jumpBufferTimer,
             dashTimer,
+            shootTimer,
             facing
         );
 
@@ -258,6 +261,7 @@ public class PlayerPrediction : TickNetworkBehaviour
             facing = rd.Facing;
         }
         dashTimer = rd.DashTimer;
+        shootTimer = rd.ShootTimer;
 
         _predictionBody.Reconcile(rd.Body);
     }

@@ -14,12 +14,13 @@ public struct PlayerReconcileData : IReconcileData
     public float CoyoteTimer;
     public float JumpBufferTimer;
     public float DashTimer;
+    public float ShootTimer;
     public int Facing;
 
     // Required plumbing
     private uint _tick;
     public PlayerReconcileData(PredictionRigidbody2D body, Vector2 vel, bool grounded,
-                         float coyote, float jumpBuf, float dash, int facing)
+                         float coyote, float jumpBuf, float dash, float shoot, int facing)
     {
         Body = body;
         Velocity = vel;
@@ -27,6 +28,7 @@ public struct PlayerReconcileData : IReconcileData
         CoyoteTimer = coyote;
         JumpBufferTimer = jumpBuf;
         DashTimer = dash;
+        ShootTimer = shoot;
         Facing = facing;
         _tick = 0;
     }
