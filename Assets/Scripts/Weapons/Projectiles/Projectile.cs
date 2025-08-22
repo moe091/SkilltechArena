@@ -5,7 +5,7 @@ public class Projectile : MonoBehaviour
 {
     public enum Role { Visual, Server }   // Visual: owner/spectator; Server: authoritative
 
-    ProjectileDef _def;
+    [SerializeField] public ProjectileDef _def;
     Role _role;
     Vector2 _vel;
     float _life;

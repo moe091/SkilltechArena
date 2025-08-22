@@ -16,14 +16,14 @@ public class WeaponController : NetworkBehaviour
 
     private readonly SyncVar<WeaponId> _equippedId = new SyncVar<WeaponId>();
     private IWeapon _weapon;
-
+    private PlayerPrediction _playerPrediction;
     [SerializeField] private Collider2D shooterCollider;   // assign your player's main collider
-    public Collider2D ShooterCollider => shooterCollider;  // expose for Shotgun
 
     private void Awake()
     {
         // Subscribe to change notifications (server & clients)
         _equippedId.OnChange += OnEquippedIdChanged;
+        _playerPrediction = GetComponent<PlayerPrediction>();
     }
 
     /// <summary>
@@ -36,13 +36,13 @@ public class WeaponController : NetworkBehaviour
         if (weapon == null) return;
 
         _equippedId.Value = weapon.weaponId;   // triggers OnEquippedIdChanged everywhere
-
+        _playerPrediction.SetShotCooldown(weapon.secondsBetweenShots);
         // Server initializes authoritative state
         curAmmo = weapon.maxAmmo;
         nextAllowedFireTick = 0;
     }
 
-    public Vector2 TryFire(int tick, float angleDegrees, ref Vector2 currentVel)
+    public Vector2 TryFire(int tick, float angleDegrees, bool isReplayed, ref Vector2 currentVel)
     {
         if (curWeapon == null)
         {
@@ -65,13 +65,32 @@ public class WeaponController : NetworkBehaviour
         // Forward to runtime behavior (Shotgun)
         if (_weapon != null)
         {
-            return _weapon.TryFire(tick, aimDir.normalized, ref currentVel);
+            return _weapon.TryFire(tick, aimDir.normalized, isReplayed, ref currentVel);
         }
         else
         {
             Debug.LogWarning("No IWeaponRuntime found on weapon view prefab.");
             return Vector2.zero;
         }
+    }
+
+    [ServerRpc(RequireOwnership = true)]
+    public void ServerFire(Vector2 pos, float aimDir, uint tick)
+    {
+        float timePassed = (float)base.TimeManager.TimePassed(tick, false);
+        //passedTime = Mathf.Min(MAX_PASSED_TIME / 2f, passedTime); // add cap so that super laggy clients don't screw over other players
+        Debug.Log("[WeaponController::ServerFire] called with timePassed = " + timePassed);
+        _weapon?.SpawnProjectiles(pos, aimDir, timePassed);
+        ObserverFire(pos, aimDir, tick);
+    }
+
+    [ObserversRpc(ExcludeOwner = true)]
+    public void ObserverFire(Vector2 pos, float aimDir, uint tick)
+    {
+        float timePassed = (float)base.TimeManager.TimePassed(tick, false);
+        //passedTime = Mathf.Min(MAX_PASSED_TIME / 2f, passedTime); // add cap so that super laggy clients don't screw over other players
+        Debug.Log("[WeaponController::ServerFire] called with timePassed = " + timePassed);
+        _weapon?.SpawnProjectiles(pos, aimDir, timePassed);
     }
 
     // v4 OnChange signature: (prev, next, asServer)
@@ -106,5 +125,21 @@ public class WeaponController : NetworkBehaviour
         _weapon = _viewInstance.GetComponent<IWeapon>();
         if (_weapon != null)
             _weapon.Initialize(this);
+    }
+
+    [ServerRpc(RequireOwnership = true)]
+    public void Server_Fire(Vector2 muzzlePos, float baseAngleDeg, int pelletCount,
+                        float spreadDeg, float speed, float life, int seed, uint fireTick)
+    {
+        _weapon?.Server_Fire(muzzlePos, baseAngleDeg, pelletCount,
+                                      spreadDeg, speed, life, seed, fireTick);
+    }
+
+    [ObserversRpc(ExcludeOwner = true)]
+    public void Obs_Fire(Vector2 muzzlePos, float baseAngleDeg, int pelletCount,
+                         float spreadDeg, float speed, float life, int seed, float passedTimeSeconds)
+    {
+        _weapon?.Obs_Fire(muzzlePos, baseAngleDeg, pelletCount,
+                                   spreadDeg, speed, life, seed, passedTimeSeconds);
     }
 }

@@ -121,7 +121,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8e2a284a3cadd9846a71faeac73a6acb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  projectilePrefab: {fileID: 4074797462511541835, guid: 3f8706f3daac65049b6564fd123c42b0, type: 3}
+  _componentIndexCache: 0
+  _addedNetworkObject: {fileID: 0}
+  _networkObjectCache: {fileID: 0}
+  projectilePrefab: {fileID: 4505553777555821677, guid: 655cd0cc74543394d92bbeff77f67557, type: 3}
+  projectileDef: {fileID: 11400000, guid: b96e192badb41e646a38c9eb1019a8be, type: 2}
   muzzle: {fileID: 6504478386557760539}
   projectileSpeed: 40
   pellets: 8
@@ -129,6 +133,7 @@ MonoBehaviour:
   speedVariance: 6
   muzzleBackOffset: 0
   recoilForce: 23
+  cooldown: 70
   shootSfx: {fileID: 8300000, guid: 47ebc60abf9145e4c85e9d9ec9918947, type: 3}
 --- !u!82 &3775519945248071567
 AudioSource:

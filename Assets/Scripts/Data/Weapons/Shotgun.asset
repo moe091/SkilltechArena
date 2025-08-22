@@ -22,4 +22,4 @@ MonoBehaviour:
   numProjectiles: 6
   spreadDegrees: 3
   reloadTimeSeconds: 2
-  secondsBetweenShots: 1
+  secondsBetweenShots: 0.7

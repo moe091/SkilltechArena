@@ -36,7 +36,6 @@ public class PlayerPrediction : TickNetworkBehaviour
 
     [Header("Weapon")]
     public Transform _weaponSlot;
-    public float shotCooldown = 1f;
 
     private Rigidbody2D rb;
 
@@ -47,7 +46,9 @@ public class PlayerPrediction : TickNetworkBehaviour
     private float jumpBufferTimer;
     private float dashTimer;
     private float shootTimer;
+    private float shotCooldown = 1f;
     private int facing = 1;               // -1 left, +1 right
+    private int _lastFireTick = 0; //used only to prevent multiple fires per tick, not for cooldown
 
     private uint _lastReplicateTick;
     private PredictionRigidbody2D _predictionBody = new();
@@ -140,7 +141,7 @@ public class PlayerPrediction : TickNetworkBehaviour
         var s = transform.localScale;
         s.x = Mathf.Abs(s.x) * facing;
         transform.localScale = s;
-        
+
 
         if (transform.lossyScale.x < 0f)
         {
@@ -171,8 +172,10 @@ public class PlayerPrediction : TickNetworkBehaviour
         // FIRE gate based on predicted tick cooldown
         if (shootTimer <= 0f && input.attack1Pressed)
         {
+            bool isReplayed = state.HasFlag(ReplicateState.Replayed);
             shootTimer = shotCooldown;
-            _weaponController.TryFire(rdTick, input.lookAngleDeg, ref currentVel);
+            _weaponController.TryFire(rdTick, input.lookAngleDeg, isReplayed, ref currentVel);
+            _lastFireTick = (int)TimeManager.Tick;
         }
         if (shootTimer > 0f) shootTimer -= dt;
 
@@ -256,10 +259,10 @@ public class PlayerPrediction : TickNetworkBehaviour
         if (!IsOwner) {
             velocity = rd.Velocity;
             isGrounded = rd.IsGrounded;
-            coyoteTimer = rd.CoyoteTimer;
-            jumpBufferTimer = rd.JumpBufferTimer;
             facing = rd.Facing;
         }
+        coyoteTimer = rd.CoyoteTimer;
+        jumpBufferTimer = rd.JumpBufferTimer;
         dashTimer = rd.DashTimer;
         shootTimer = rd.ShootTimer;
 
@@ -282,5 +285,10 @@ public class PlayerPrediction : TickNetworkBehaviour
         }
     }
 
+    //NOTE:: this really doesn't belong here but because of reconciliation it's a lot easier to handle weapon cooldowns from within playerPrediction
+    public void SetShotCooldown(float cd)
+    {
+        shotCooldown = cd;
+    }
 
 }
