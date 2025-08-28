@@ -5,6 +5,7 @@ using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
+using UnityEngine.Windows;
 
 public class PlayerPrediction : TickNetworkBehaviour
 {
@@ -36,7 +37,7 @@ public class PlayerPrediction : TickNetworkBehaviour
 
     [Header("Weapon")]
     public Transform _weaponSlot;
-
+    public Transform _sprite;
     private Rigidbody2D rb;
 
     // Simulated state (kept explicit for prediction)
@@ -48,13 +49,17 @@ public class PlayerPrediction : TickNetworkBehaviour
     private float shootTimer;
     private float shotCooldown = 1f;
     private int facing = 1;               // -1 left, +1 right
-    private int _lastFireTick = 0; //used only to prevent multiple fires per tick, not for cooldown
+    private float lookAngleDeg;
+    private float weaponAngleDeg; // final, post-mirror angle we actually render
+
 
     private uint _lastReplicateTick;
     private PredictionRigidbody2D _predictionBody = new();
 
     private PlayerController _playerController;
     private WeaponController _weaponController;
+    [SerializeField] private SpriteRenderer _spriteRenderer;
+    [SerializeField] private Animator _animator;
 
 
     private void Awake()
@@ -135,20 +140,21 @@ public class PlayerPrediction : TickNetworkBehaviour
 
 
 
-        float angle = input.lookAngleDeg; // from your input
+        lookAngleDeg = input.lookAngleDeg;
+        int facing = (Mathf.Abs(lookAngleDeg) > 90f) ? -1 : 1;
 
-        facing = Mathf.Abs(angle) > 90f ? -1 : 1;
-        var s = transform.localScale;
-        s.x = Mathf.Abs(s.x) * facing;
-        transform.localScale = s;
-
-
-        if (transform.lossyScale.x < 0f)
+        if (facing == 1)
         {
-            // Mirroring across Y: θ' = 180° - θ
-            angle = 180f - angle;
+            _spriteRenderer.flipX = false;
+            _weaponController.SetWeaponInverted(false);
+        } else
+        {
+            _spriteRenderer.flipX = true;
+            _weaponController.SetWeaponInverted(true);
         }
-        _weaponSlot.localRotation = Quaternion.Euler(0f, 0f, angle);
+
+        if (_weaponSlot)
+            _weaponSlot.localRotation = Quaternion.Euler(0f, 0f, lookAngleDeg);
 
 
 
@@ -175,7 +181,6 @@ public class PlayerPrediction : TickNetworkBehaviour
             bool isReplayed = state.HasFlag(ReplicateState.Replayed);
             shootTimer = shotCooldown;
             _weaponController.TryFire(rdTick, input.lookAngleDeg, isReplayed, ref currentVel);
-            _lastFireTick = (int)TimeManager.Tick;
         }
         if (shootTimer > 0f) shootTimer -= dt;
 
@@ -220,6 +225,8 @@ public class PlayerPrediction : TickNetworkBehaviour
         // (Optional) if you re-enable stick later:
         // if (isGrounded && !didStartJumpThisTick && dv.y > 0f) dv.y = 0f;
 
+        _animator.SetFloat("speed", Mathf.Abs(currentVel.x));
+
         float mass = rb.mass > 0f ? rb.mass : 1f;
         float tickDt = Mathf.Max(dt, 1e-6f);
         Vector2 force = (mass * dv) / tickDt;
@@ -246,7 +253,7 @@ public class PlayerPrediction : TickNetworkBehaviour
             jumpBufferTimer,
             dashTimer,
             shootTimer,
-            facing
+            lookAngleDeg
         );
 
         if (IsServerStarted || IsOwner)
@@ -259,12 +266,29 @@ public class PlayerPrediction : TickNetworkBehaviour
         if (!IsOwner) {
             velocity = rd.Velocity;
             isGrounded = rd.IsGrounded;
-            facing = rd.Facing;
         }
         coyoteTimer = rd.CoyoteTimer;
         jumpBufferTimer = rd.JumpBufferTimer;
         dashTimer = rd.DashTimer;
         shootTimer = rd.ShootTimer;
+        lookAngleDeg = rd.LookAngleDeg;
+
+
+        int facing = (Mathf.Abs(lookAngleDeg) > 90f) ? -1 : 1;
+
+        if (facing == 1)
+        {
+            _spriteRenderer.flipX = false;
+            _weaponController.SetWeaponInverted(false);
+        }
+        else
+        {
+            _spriteRenderer.flipX = true;
+            _weaponController.SetWeaponInverted(true);
+        }
+
+        if (_weaponSlot)
+            _weaponSlot.localRotation = Quaternion.Euler(0f, 0f, lookAngleDeg);
 
         _predictionBody.Reconcile(rd.Body);
     }

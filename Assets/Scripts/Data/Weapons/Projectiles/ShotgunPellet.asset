@@ -12,14 +12,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b201c2c0bc25f804fb8b2504d1715d62, type: 3}
   m_Name: ShotgunPellet
   m_EditorClassIdentifier: 
-  sprite: {fileID: 21300000, guid: 3e0a31a06ea45914fb3eecf6740d9ca8, type: 3}
+  prefab: {fileID: 9065215712689058676, guid: 655cd0cc74543394d92bbeff77f67557, type: 3}
   lifetime: 2.5
-  speed: 24
+  speed: 35
   gravity: 0
   maxPassedTime: 0.15
   catchupRate: 0.1
   despawnOnImpact: 1
+  damage: 3
   hitMask:
     serializedVersion: 2
-    m_Bits: 1079
+    m_Bits: 4294967295
   id: pellet

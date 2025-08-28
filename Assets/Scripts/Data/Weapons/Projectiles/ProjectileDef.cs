@@ -5,8 +5,8 @@ using UnityEngine;
 public class ProjectileDef : ScriptableObject
 {
     [Header("Visuals")]
-    public Sprite sprite;
-    public float lifetime = 2.5f;
+    public GameObject prefab;
+    public float lifetime = 2.5f;  
 
     [Header("Motion")]
     public float speed = 24f;
@@ -18,6 +18,7 @@ public class ProjectileDef : ScriptableObject
 
     [Header("Hits")]
     public bool despawnOnImpact = true;
+    public int damage = 3;
     public LayerMask hitMask = ~0;
 
     // Optional: a short ID if you want to reference this type over RPCs

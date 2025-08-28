@@ -1,5 +1,6 @@
 using FishNet.Object;                    // NetworkBehaviour, [Server]
 using FishNet.Object.Synchronizing;      // SyncVar<T>
+using TMPro;
 using UnityEngine;
 
 public class WeaponController : NetworkBehaviour
@@ -17,7 +18,7 @@ public class WeaponController : NetworkBehaviour
     private readonly SyncVar<WeaponId> _equippedId = new SyncVar<WeaponId>();
     private IWeapon _weapon;
     private PlayerPrediction _playerPrediction;
-    [SerializeField] private Collider2D shooterCollider;   // assign your player's main collider
+    [SerializeField] public Collider2D shooterCollider;   // assign your player's main collider
 
     private void Awake()
     {
@@ -74,23 +75,28 @@ public class WeaponController : NetworkBehaviour
         }
     }
 
+
     [ServerRpc(RequireOwnership = true)]
     public void ServerFire(Vector2 pos, float aimDir, uint tick)
     {
         float timePassed = (float)base.TimeManager.TimePassed(tick, false);
         //passedTime = Mathf.Min(MAX_PASSED_TIME / 2f, passedTime); // add cap so that super laggy clients don't screw over other players
         Debug.Log("[WeaponController::ServerFire] called with timePassed = " + timePassed);
-        _weapon?.SpawnProjectiles(pos, aimDir, timePassed);
+        _weapon?.SpawnProjectiles(pos, aimDir, timePassed, true, tick);
         ObserverFire(pos, aimDir, tick);
     }
 
-    [ObserversRpc(ExcludeOwner = true)]
+
+    [ObserversRpc(ExcludeOwner = true, RunLocally = false)]
+    [Client]
     public void ObserverFire(Vector2 pos, float aimDir, uint tick)
     {
+        if (IsHostStarted) return;
+
         float timePassed = (float)base.TimeManager.TimePassed(tick, false);
         //passedTime = Mathf.Min(MAX_PASSED_TIME / 2f, passedTime); // add cap so that super laggy clients don't screw over other players
-        Debug.Log("[WeaponController::ServerFire] called with timePassed = " + timePassed);
-        _weapon?.SpawnProjectiles(pos, aimDir, timePassed);
+        Debug.Log("[WeaponController::ObserverFire] called with timePassed = " + timePassed);
+        _weapon?.SpawnProjectiles(pos, aimDir, timePassed, false, tick);
     }
 
     // v4 OnChange signature: (prev, next, asServer)
@@ -127,19 +133,13 @@ public class WeaponController : NetworkBehaviour
             _weapon.Initialize(this);
     }
 
-    [ServerRpc(RequireOwnership = true)]
-    public void Server_Fire(Vector2 muzzlePos, float baseAngleDeg, int pelletCount,
-                        float spreadDeg, float speed, float life, int seed, uint fireTick)
+    public void SetWeaponInverted(bool invert)
     {
-        _weapon?.Server_Fire(muzzlePos, baseAngleDeg, pelletCount,
-                                      spreadDeg, speed, life, seed, fireTick);
+        if (_viewInstance)
+        {
+            SpriteRenderer _sprite = _viewInstance.GetComponent<SpriteRenderer>();
+            if (_sprite) _sprite.flipY = invert;
+        }
     }
 
-    [ObserversRpc(ExcludeOwner = true)]
-    public void Obs_Fire(Vector2 muzzlePos, float baseAngleDeg, int pelletCount,
-                         float spreadDeg, float speed, float life, int seed, float passedTimeSeconds)
-    {
-        _weapon?.Obs_Fire(muzzlePos, baseAngleDeg, pelletCount,
-                                   spreadDeg, speed, life, seed, passedTimeSeconds);
-    }
 }

@@ -1,5 +1,6 @@
 using FishNet;
 using FishNet.Managing.Predicting;
+using FishNet.Managing.Timing;
 using FishNet.Object;           // to access controller.ServerManager, controller.NetworkObject
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -8,15 +9,15 @@ public class Shotgun : MonoBehaviour, IWeapon
 { 
     [Header("Setup")]
     // Option A (no NetworkObject): one generic prefab + data asset
-    [SerializeField] private Projectile projectilePrefab;   // the visual/server prefab (no NetworkObject)
-    [SerializeField] private ProjectileDef projectileDef;     // ScriptableObject with speed, lifetime, etc.
+    [SerializeField] private GameObject projectilePrefab;   // the visual/server prefab (no NetworkObject)
 
     [SerializeField] private Transform muzzle;               // optional; otherwise we’ll use transform.position
 
     [Header("Ballistics")]
     [SerializeField] private float projectileSpeed = 24f;    // units/sec (2D)
-    [SerializeField] private int pelletCount = 8;                // number of pellets per shot
-    [SerializeField] private float spreadDegrees = 30f;      // full cone width (e.g., 12° => ±6°)
+    [SerializeField] private int damage = 5;    // units/sec (2D)
+    [SerializeField] private int pelletCount = 1;                // number of pellets per shot
+    [SerializeField] private float spreadDegrees = 10f;      // full cone width (e.g., 12° => ±6°)
     [SerializeField] private float speedVariance = 3f;      // full cone width (e.g., 12° => ±6°)
     [SerializeField] private float muzzleBackOffset = 0f;    // push muzzle slightly back if needed
     [SerializeField] private float recoilForce = 20f;    // push muzzle slightly back if needed
@@ -59,8 +60,13 @@ public class Shotgun : MonoBehaviour, IWeapon
 
         if (!isReplayed && _controller.IsOwner)
         {
-            SpawnProjectiles(muzzlePos, baseAngleDeg, 0);
-            _controller.ServerFire(muzzlePos, baseAngleDeg, _controller.TimeManager.Tick); //grab the tick HERE because serverFire is an RPC, we want to pass the tick from client
+            uint fireTick = _controller.TimeManager.Tick;
+            SpawnProjectiles(muzzlePos, baseAngleDeg, 0, _controller.IsServerInitialized, fireTick); //always spawn local projectiles
+
+            if (!_controller.IsServerInitialized) //if we aren't server, send RPC to spawn projectiles on server
+                _controller.ServerFire(muzzlePos, baseAngleDeg, fireTick); //grab the tick HERE because serverFire is an RPC, we want to pass the tick from client
+            else
+                _controller.ObserverFire(muzzlePos, baseAngleDeg, fireTick);
         }
 
         Vector2 recoilVector = aimDir.normalized * -recoilForce;
@@ -78,107 +84,22 @@ public class Shotgun : MonoBehaviour, IWeapon
 
 
 
-    public void SpawnProjectiles(Vector2 pos, float aimDir, float timePassed)
+    public void SpawnProjectiles(Vector2 pos, float aimDir, float timePassed, bool isAuthority, uint fireTick)
     {
         var prev = Random.state;        // save global RNG state
-        Random.InitState((int)_controller.TimeManager.Tick);         // seed Unity's RNG
+        Random.InitState((int)fireTick);         // seed Unity's RNG
+        Projectile.Role role = isAuthority ? Projectile.Role.Server : Projectile.Role.Visual;
 
         for (int i = 0; i < pelletCount; i++)
         {
-            float ang = aimDir + Random.Range(-15f, 15f);
-            Vector2 dir = new(Mathf.Cos(ang * Mathf.Deg2Rad), Mathf.Sin(ang * Mathf.Deg2Rad));
-            var go = Instantiate(projectilePrefab);
-            go.GetComponent<Projectile>().Init(projectileDef, Projectile.Role.Visual, muzzle.position, dir, projectileDef.speed + Random.Range(-speedVariance, speedVariance), 0);
+            ulong id = ProjectileManager.GetUniqueHash(_controller.NetworkObject.OwnerId, fireTick, i);
+
+            float ang = aimDir + Random.Range(-spreadDegrees, spreadDegrees);
+            Vector2 dir = new(Mathf.Cos(ang * Mathf.Deg2Rad), Mathf.Sin(ang * Mathf.Deg2Rad)); 
+            ProjectileManager.Instance.SpawnProj("Projectile", pos, dir, damage, projectileSpeed + Random.Range(-speedVariance, speedVariance), timePassed, role, id, _controller.shooterCollider);
         }
 
         Random.state = prev;
     }
 
-
-
-    //NOTE:: TODO:: GET RID OF ALL THIS SHIT BELOW HERE
-
-
-
-
-
-    public void Server_Fire(Vector2 muzzlePos, float baseAngleDeg, int pelletCount, float spreadDeg, float speed, float life, int seed, uint fireTick)
-    {
-        Debug.Log($"[Shotgun] Server_Fire called. Spawning {pelletCount} pellets");
-        // How much time passed between owner press and server receive?
-        float dt = (float)InstanceFinder.TimeManager.TickDelta;
-        float secondsPassed = Mathf.Max(0f, (InstanceFinder.TimeManager.Tick - fireTick) * dt); //NOTE:: could this cause issues if dt varies tick to tick??
-
-        // Smooth clamps (tweak to taste)
-        float passedForServer = Mathf.Min(secondsPassed, projectileDef.maxPassedTime) * 0.5f; // conservative
-        float passedForSpectators = Mathf.Min(secondsPassed, projectileDef.maxPassedTime);        // full (clamped)
-
-        // Server-only pellets (authoritative hits)
-        ServerSpawnBurst(muzzlePos, baseAngleDeg, pelletCount, spreadDeg, speed, life, seed, passedForServer);
-
-        // Tell spectators to spawn visuals (exclude owner)
-        Obs_Fire(muzzlePos, baseAngleDeg, pelletCount, spreadDeg, speed, life, seed, passedForSpectators);
-    }
-
-
-    public void Obs_Fire(Vector2 muzzlePos, float baseAngleDeg, int pelletCount, float spreadDeg, float speed, float life, int seed, float passedTimeSeconds)
-    {
-
-        Debug.Log($"[Shotgun] Obs_Fire called. Spawning {pelletCount} pellets");
-        LocalSpawnBurst(muzzlePos, baseAngleDeg, pelletCount, spreadDeg, speed, life, seed, passedTimeSeconds);
-    }
-
-  
-
-    // Deterministic spread: everyone gets the same offsets from the same seed
-    public static float[] BuildOffsets(int pellets, float spreadDeg, int seed)
-    {
-        float half = spreadDeg * 0.5f;
-        Random.InitState(seed);
-        float[] arr = new float[pellets];
-
-        for (int i = 0; i < pellets; i++)
-        {
-            // Simple uniform in [-half, half]
-            float t = Random.Range(0, 1);
-            arr[i] = (t * 2f - 1f) * half;
-        } 
-        return arr;
-    }
-
-    // Spawns a local visual burst (owner or spectators). No networking.
-    private void LocalSpawnBurst(Vector2 muzzlePos, float baseAngleDeg, int pelletCount, float spreadDeg, float speed, float life, int seed, float passedTimeSeconds)
-    {
-        Debug.Log($"[Shotgun] LocalSpawnBurst called. Spawning {pelletCount} pellets");
-        var offsets = BuildOffsets(pelletCount, spreadDeg, seed);
-        for (int i = 0; i < pelletCount; i++)
-        {
-            float ang = baseAngleDeg + offsets[i];
-            Vector2 dir = new(Mathf.Cos(ang * Mathf.Deg2Rad), Mathf.Sin(ang * Mathf.Deg2Rad));
-
-            var go = Instantiate(projectilePrefab);
-            go.GetComponent<Projectile>().Init(projectileDef, Projectile.Role.Visual, muzzlePos, dir, speed, passedTimeSeconds);
-        }
-    }
-
-    private void ServerSpawnBurst(Vector2 muzzlePos, float baseAngleDeg, int pelletCount,
-                              float spreadDeg, float speed, float life,
-                              int seed, float passedTimeSeconds)
-    {
-        var offsets = BuildOffsets(pelletCount, spreadDeg, seed);
-        for (int i = 0; i < pelletCount; i++)
-        {
-            float ang = baseAngleDeg + offsets[i];
-            Vector2 dir = new(Mathf.Cos(ang * Mathf.Deg2Rad), Mathf.Sin(ang * Mathf.Deg2Rad));
-
-            var go = Instantiate(projectilePrefab);
-            var proj = go.GetComponent<Projectile>();
-            proj.Init(projectileDef, Projectile.Role.Server, muzzlePos, dir, speed, passedTimeSeconds);
-
-            // Optional: ignore the shooter's collider if your controller exposes one
-            // var myCol = go.GetComponent<Collider2D>();
-            // var ignore = _controller?.ShooterCollider;
-            // if (myCol && ignore) Physics2D.IgnoreCollision(myCol, ignore, true);
-        }
-    }
 }

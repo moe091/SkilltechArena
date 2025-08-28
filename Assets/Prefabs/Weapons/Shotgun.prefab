@@ -121,18 +121,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8e2a284a3cadd9846a71faeac73a6acb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _componentIndexCache: 0
-  _addedNetworkObject: {fileID: 0}
-  _networkObjectCache: {fileID: 0}
-  projectilePrefab: {fileID: 4505553777555821677, guid: 655cd0cc74543394d92bbeff77f67557, type: 3}
-  projectileDef: {fileID: 11400000, guid: b96e192badb41e646a38c9eb1019a8be, type: 2}
+  projectilePrefab: {fileID: 9065215712689058676, guid: 655cd0cc74543394d92bbeff77f67557, type: 3}
   muzzle: {fileID: 6504478386557760539}
-  projectileSpeed: 40
-  pellets: 8
-  spreadDegrees: 30
+  projectileSpeed: 45
+  damage: 3
+  pelletCount: 13
+  spreadDegrees: 12
   speedVariance: 6
   muzzleBackOffset: 0
-  recoilForce: 23
+  recoilForce: 28
   cooldown: 70
   shootSfx: {fileID: 8300000, guid: 47ebc60abf9145e4c85e9d9ec9918947, type: 3}
 --- !u!82 &3775519945248071567

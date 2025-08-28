@@ -19,7 +19,7 @@ MonoBehaviour:
   maxAmmo: 100
   damage: 10
   recoilForce: 12
-  numProjectiles: 6
+  numProjectiles: 1
   spreadDegrees: 3
   reloadTimeSeconds: 2
   secondsBetweenShots: 0.7
