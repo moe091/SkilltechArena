@@ -465,8 +465,8 @@ MonoBehaviour:
   jumpBufferTime: 0.1
   variableJump: 1
   jumpCutMultiplier: 0.5
-  dashSpeed: 30
-  dashDuration: 0.15
+  dashSpeed: 38
+  dashDuration: 0.2
   groundCheck: {fileID: 4558896078119621145}
   groundCheckRadius: 0.12
   groundLayer:

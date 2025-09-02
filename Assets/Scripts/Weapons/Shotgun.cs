@@ -68,6 +68,12 @@ public class Shotgun : MonoBehaviour, IWeapon
             else
                 _controller.ObserverFire(muzzlePos, baseAngleDeg, fireTick);
         }
+        if (!isReplayed)
+        {
+            Debug.Log("TryFire playing animation");
+            _audioSource.Play();
+            _animator.SetTrigger("Shoot");
+        }
 
         Vector2 recoilVector = aimDir.normalized * -recoilForce;
         float yRecoil = recoilVector.y;

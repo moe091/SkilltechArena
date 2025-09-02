@@ -129,7 +129,7 @@ MonoBehaviour:
   spreadDegrees: 12
   speedVariance: 6
   muzzleBackOffset: 0
-  recoilForce: 28
+  recoilForce: 31
   cooldown: 70
   shootSfx: {fileID: 8300000, guid: 47ebc60abf9145e4c85e9d9ec9918947, type: 3}
 --- !u!82 &3775519945248071567
