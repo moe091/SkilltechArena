@@ -270,6 +270,7 @@ GameObject:
   - component: {fileID: 1407096211}
   - component: {fileID: 1407096210}
   - component: {fileID: 1407096212}
+  - component: {fileID: 1407096216}
   - component: {fileID: 1407096213}
   - component: {fileID: 1407096214}
   - component: {fileID: 1407096215}
@@ -327,7 +328,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_ProtocolType: 0
-  m_UseWebSockets: 0
+  m_UseWebSockets: 1
   m_UseEncryption: 0
   m_MaxPacketQueueSize: 128
   m_MaxPayloadSize: 6144
@@ -392,6 +393,26 @@ MonoBehaviour:
   _createLocalStates: 1
   _stateInterpolation: 2
   _stateOrder: 1
+--- !u!114 &1407096216
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1407096209}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 34e4a322dca349547989b14021da4e23, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  Transport: {fileID: 1407096212}
+  _intermediateLayer: {fileID: 0}
+  _latencySimulator:
+    _enabled: 0
+    _simulateHost: 0
+    _latency: 0
+    _outOfOrder: 0
+    _packetLoss: 0
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
