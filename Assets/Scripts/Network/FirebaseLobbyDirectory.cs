@@ -3,6 +3,7 @@ using System.Text;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Networking;
+using System.Linq;
 
 [Serializable]
 public class LobbyRow
@@ -71,6 +72,38 @@ public class FirebaseLobbyDirectory : MonoBehaviour
         using var req = UnityWebRequest.Delete(Base($"{tablePath}/{id}"));
         var op = req.SendWebRequest();
         while (!op.isDone) await System.Threading.Tasks.Task.Yield();
+    }
+
+    public async System.Threading.Tasks.Task<int> DeleteExpiredAsync(System.Collections.Generic.IEnumerable<string> ids)
+    {
+        var arr = ids?.Distinct().ToArray() ?? System.Array.Empty<string>();
+        if (arr.Length == 0) return 0;
+
+        // Build {"id1":null,"id2":null}
+        var sb = new StringBuilder();
+        sb.Append('{');
+        for (int i = 0; i < arr.Length; i++)
+        {
+            if (i > 0) sb.Append(',');
+            // Basic JSON string escape for quotes/backslashes if your keys can contain them (Firebase push IDs don't)
+            sb.Append('"').Append(arr[i]).Append("\":null");
+        }
+        sb.Append('}');
+        var body = Encoding.UTF8.GetBytes(sb.ToString());
+
+        // PATCH to the collection path (e.g., "lobbies.json")
+        using var req = new UnityWebRequest(Base(tablePath), "PATCH");
+        req.uploadHandler = new UploadHandlerRaw(body);
+        req.downloadHandler = new DownloadHandlerBuffer();
+        req.SetRequestHeader("Content-Type", "application/json");
+
+        var op = req.SendWebRequest();
+        while (!op.isDone) await System.Threading.Tasks.Task.Yield();
+
+        if (req.result != UnityWebRequest.Result.Success)
+            throw new System.Exception(req.error);
+
+        return arr.Length;
     }
 
     // Returns a map of firebaseKey -> LobbyRow
