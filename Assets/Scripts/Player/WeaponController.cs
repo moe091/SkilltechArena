@@ -10,8 +10,8 @@ public class WeaponController : NetworkBehaviour
 
     [Header("Runtime (local)")]
     public WeaponDefinition curWeapon;         // resolved locally from ID
-    int curAmmo;
-    int nextAllowedFireTick;
+
+    public float cooldownSeconds;
 
     GameObject _viewInstance;
 
@@ -19,6 +19,9 @@ public class WeaponController : NetworkBehaviour
     private IWeapon _weapon;
     private PlayerPrediction _playerPrediction;
     [SerializeField] public Collider2D shooterCollider;   // assign your player's main collider
+
+
+    public Sprite ammoIcon;
 
     private void Awake()
     {
@@ -37,28 +40,13 @@ public class WeaponController : NetworkBehaviour
         if (weapon == null) return;
 
         _equippedId.Value = weapon.weaponId;   // triggers OnEquippedIdChanged everywhere
-        _playerPrediction.SetShotCooldown(weapon.secondsBetweenShots);
+        cooldownSeconds = weapon.secondsBetweenShots;
         // Server initializes authoritative state
-        curAmmo = weapon.maxAmmo;
-        nextAllowedFireTick = 0;
+        _playerPrediction.SetAmmo(weapon.maxAmmo);
     }
 
-    public Vector2 TryFire(int tick, float angleDegrees, bool isReplayed, ref Vector2 currentVel)
+    public int TryFire(int tick, float angleDegrees, bool isReplayed, ref Vector2 currentVel)
     {
-        if (curWeapon == null)
-        {
-            Debug.Log("Can't Fire - no weapon equipped");
-            return Vector2.zero;
-        }
-
-        // Tick-gated rate of fire & ammo (basic MVP gating)
-        int fireInterval = curWeapon.GetFireIntervalTicks(TimeManager.TickRate);
-        //if (tick < nextAllowedFireTick || curAmmo <= 0)
-            //return Vector2.zero;
-
-        nextAllowedFireTick = tick + fireInterval;
-        curAmmo--;
-
         float rad = angleDegrees * Mathf.Deg2Rad;
         Vector2 aimDir = new Vector2(Mathf.Cos(rad), Mathf.Sin(rad)).normalized;
 
@@ -71,7 +59,7 @@ public class WeaponController : NetworkBehaviour
         else
         {
             Debug.LogWarning("No IWeaponRuntime found on weapon view prefab.");
-            return Vector2.zero;
+            return 0;
         }
     }
 
@@ -106,14 +94,15 @@ public class WeaponController : NetworkBehaviour
         var db = WeaponDatabase.Load();
         curWeapon = db ? db.Get(next) : null;
 
-        RebuildView();
-
-        // Mirror ammo/cooldown locally for UI; server already set authoritative values
+        cooldownSeconds = curWeapon.secondsBetweenShots;
         if (curWeapon != null)
         {
-            curAmmo = curWeapon.maxAmmo;
-            nextAllowedFireTick = 0;
+            _playerPrediction.SetAmmo(curWeapon.maxAmmo);
+            ammoIcon = curWeapon.ammoIcon;
         }
+        RebuildView();
+
+
     }
 
     private void RebuildView()

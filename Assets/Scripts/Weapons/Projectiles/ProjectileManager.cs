@@ -37,7 +37,6 @@ public class ProjectileManager : NetworkBehaviour
         foreach(GameObject prefab in projectilePrefabs)
         {
             _prefabsById.Add(prefab.name, prefab);
-            Debug.Log("ADDED PREFAB " +  prefab.name);
         }
 
         // Option A: auto-load all defs from a Resources folder (if you put them there)
@@ -97,7 +96,6 @@ public class ProjectileManager : NetworkBehaviour
 
     public void SpawnProj(string prefabName, Vector2 pos, Vector2 dir, int damage, float speed, float timePassed, Projectile.Role role, ulong id, Collider2D shooterCollider)
     {
-        Debug.Log("SPAWNING " + prefabName);
         GameObject go = Instantiate(GetPrefab(prefabName));
 
         Projectile proj = go.GetComponent<Projectile>();
@@ -125,7 +123,6 @@ public class ProjectileManager : NetworkBehaviour
         var proj = GetProjectile(id);
         if (proj != null)
         {
-            Debug.Log("proj " + id + " found. Destroying");
             Destroy(proj.gameObject); // client visual
         } else
         {
@@ -136,7 +133,6 @@ public class ProjectileManager : NetworkBehaviour
 
     public static void ProjectileCollision(Projectile projectile, Collider2D other)
     {
-        Debug.Log("Projectile Collision with: " + other.name);
         if (other.TryGetComponent<IHittable>(out var hittable))
         {
             hittable.OnHit(projectile, projectile.damage);
@@ -153,7 +149,7 @@ public class ProjectileManager : NetworkBehaviour
         }
         else
         {
-            Debug.Log("Projectile Collision, no DespawnOnImpact! id=" + projectile.id);
+
         }
     }
 

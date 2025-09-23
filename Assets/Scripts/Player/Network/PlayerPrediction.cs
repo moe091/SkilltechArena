@@ -1,30 +1,23 @@
 ﻿using FishNet.Object.Prediction;
 using FishNet.Transporting;
 using FishNet.Utility.Template;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Windows;
 
+/// <summary>
+/// //////////////// NEXT UP: Route curAmmo through CSP/ReplicateState.
+/// //////////////// THEN: Rework weaponController? Or just implement grenades, not using weaponController, and figure out a better way. Then change regular weapons to work the same way.
+/// </summary>
+
+
 public class PlayerPrediction : TickNetworkBehaviour
 {
     private PlayerInputCollector _inputCollector;
 
-    [Header("Horizontal Movement")]
-    public float maxMoveSpeed = 8f;
-    public float acceleration = 40f;
-    public float deceleration = 60f;   // when target speed is 0
-    public float airAcceleration = 30f; // optional: lower accel in air
-    public float airDeceleration = 40f;
-
-    [Header("Jumping")]
-    public float jumpForce = 14f;
-    public float gravity = -40f;          // manual gravity (negative)
-    public float coyoteTime = 0.10f;      // jump allowed shortly after leaving ground
-    public float jumpBufferTime = 0.10f;  // queue jump shortly before landing
-    public bool variableJump = true;      // short hop if jump not held
-    public float jumpCutMultiplier = 0.5f; // how strongly we cut jump when not held
 
     [Header("Dash")]
     public float dashSpeed = 20f;
@@ -40,26 +33,32 @@ public class PlayerPrediction : TickNetworkBehaviour
     public Transform _sprite;
     private Rigidbody2D rb;
 
+    [Header("Actions")] 
+    public PlayerActionBase attack1Action;
+
+
+    [Header("Other")]
     // Simulated state (kept explicit for prediction)
     private Vector2 velocity;
     private bool isGrounded;
     private float coyoteTimer;
     private float jumpBufferTimer;
-    private float dashTimer;
-    private float shootTimer;
-    private float shotCooldown = 1f;
-    private int facing = 1;               // -1 left, +1 right
+    private float dashTimer; 
+    private int actionTickTimer;      // ticks remaining until next allowed action
+    public int shotCooldownTicks;    // ticks for the cooldown
     private float lookAngleDeg;
-    private float weaponAngleDeg; // final, post-mirror angle we actually render
+    private int curAmmo;
 
-
+    private PlayerMoverContext _moverContext = new PlayerMoverContext();
     private uint _lastReplicateTick;
     private PredictionRigidbody2D _predictionBody = new();
 
     private PlayerController _playerController;
     private WeaponController _weaponController;
+    private PlayerStats _stats;
     [SerializeField] private SpriteRenderer _spriteRenderer;
     [SerializeField] private Animator _animator;
+    [SerializeField] private PlayerMoverBase[] _movers;
 
 
     private void Awake()
@@ -69,6 +68,9 @@ public class PlayerPrediction : TickNetworkBehaviour
         _predictionBody.Initialize(rb); // important: initialize with Rigidbody2D
         _playerController = GetComponent<PlayerController>();
         _weaponController = GetComponent<WeaponController>();
+        _stats = GetComponent<PlayerStats>();
+
+        attack1Action?.Initialize(this);
     }
 
     public override void OnStartNetwork()
@@ -121,127 +123,62 @@ public class PlayerPrediction : TickNetworkBehaviour
     }
 
 
+
     [Replicate]
     private void PerformReplicate(PlayerInputData input,
                               ReplicateState state = ReplicateState.Invalid,
                               Channel channel = Channel.Unreliable)
     {
-        _lastReplicateTick = input.GetTick();
-        int rdTick = unchecked((int)_lastReplicateTick);
-
-
-        float dt = (float)TimeManager.TickDelta;
-
-        // Only the server and the local owner should simulate.
-        bool simulateThisTick = IsServerStarted || IsOwner;
-        if (!simulateThisTick)
+        if (!(IsServerStarted || IsOwner))
             return; // remote clients do nothing; they'll update in [Reconcile]
-
-
-
-
+        
         lookAngleDeg = input.lookAngleDeg;
-        int facing = (Mathf.Abs(lookAngleDeg) > 90f) ? -1 : 1;
+        PlayerMutableContext mut = GetMutableContext();
+        UpdateMoverContext(input.GetTick(), state.HasFlag(ReplicateState.Replayed));
+        UpdateVisuals();  
 
-        if (facing == 1)
-        {
-            _spriteRenderer.flipX = false;
-            _weaponController.SetWeaponInverted(false);
-        } else
-        {
-            _spriteRenderer.flipX = true;
-            _weaponController.SetWeaponInverted(true);
-        }
-
-        if (_weaponSlot)
-            _weaponSlot.localRotation = Quaternion.Euler(0f, 0f, lookAngleDeg);
-
-
-
-
-        // --- Buffered inputs & timers ---
-        if (input.jumpPressed)
-            jumpBufferTimer = jumpBufferTime;
-        else
-            jumpBufferTimer = Mathf.Max(0f, jumpBufferTimer - dt);
-
-        // Grounded BEFORE velocity changes (predicted physics world)
-        UpdateGrounded();
-        if (isGrounded)
-            coyoteTimer = coyoteTime;
-        else
-            coyoteTimer = Mathf.Max(0f, coyoteTimer - dt);
-
-        // Start from current predicted velocity
         Vector2 currentVel = rb.velocity;
 
-        // FIRE gate based on predicted tick cooldown
-        if (shootTimer <= 0f && input.attack1Pressed)
+        
+        for (int i = 0; i < _movers.Length; i++)
         {
-            bool isReplayed = state.HasFlag(ReplicateState.Replayed);
-            shootTimer = shotCooldown;
-            _weaponController.TryFire(rdTick, input.lookAngleDeg, isReplayed, ref currentVel);
-        }
-        if (shootTimer > 0f) shootTimer -= dt;
-
-        // --- Dash ---
-        if (dashTimer <= 0f && input.dashPressed)
-        {
-            dashTimer = dashDuration;
-            int dir = Mathf.Abs(input.horizontalInput) > 0.01f ? (input.horizontalInput > 0f ? 1 : -1) : facing;
-            currentVel.x = dir * dashSpeed;
-        }
-        if (dashTimer > 0f) dashTimer -= dt;
-        else
-        {
-            float targetSpeed = input.horizontalInput * maxMoveSpeed;
-            bool hasInput = Mathf.Abs(targetSpeed) > 0.01f;
-            float accel = isGrounded
-                ? (hasInput ? acceleration : deceleration)
-                : (hasInput ? airAcceleration : airDeceleration);
-            currentVel.x = Mathf.MoveTowards(currentVel.x, targetSpeed, accel * dt);
+            var mover = _movers[i];
+            if (mover)
+                mover.DoMovement(input, _moverContext, ref mut, ref currentVel);
         }
 
-        // --- Jump / gravity ---
-        bool didStartJumpThisTick = false;
-        if (jumpBufferTimer > 0f && coyoteTimer > 0f)
-        {
-            currentVel.y = jumpForce;
-            jumpBufferTimer = 0f;
-            coyoteTimer = 0f;
-            didStartJumpThisTick = true;
-        }
-        else
-        {
-            currentVel.y += gravity * dt;
-            if (variableJump && !input.jumpHeld && currentVel.y > 0f)
-                currentVel.y += gravity * (1f - jumpCutMultiplier) * dt;
-        }
+        HandleAttack(input, state.HasFlag(ReplicateState.Replayed), ref mut, ref currentVel);
 
-        // If you re-enable ground-stick later, keep it here; for now it’s off.
+        jumpBufferTimer = mut.jumpBufferTimer;
+        coyoteTimer = mut.coyoteTimer;
+        dashTimer = mut.dashTimer;
+        actionTickTimer = mut.actionTickTimer;
+        curAmmo = mut.curAmmo;
 
-        // --- Velocity targeting via force ---
+
+        // Calculate and apply force based on changes made to currentVel by movers(and TryFire)
         Vector2 dv = currentVel - rb.velocity;
-        // (Optional) if you re-enable stick later:
-        // if (isGrounded && !didStartJumpThisTick && dv.y > 0f) dv.y = 0f;
-
-        _animator.SetFloat("speed", Mathf.Abs(currentVel.x));
 
         float mass = rb.mass > 0f ? rb.mass : 1f;
-        float tickDt = Mathf.Max(dt, 1e-6f);
+        float tickDt = Mathf.Max(_moverContext.dt, 1e-6f);
         Vector2 force = (mass * dv) / tickDt;
         if (force.sqrMagnitude > 0f)
             _predictionBody.AddForce(force);
 
-        _predictionBody.Simulate();  // <-- only owner/server runs this
 
-        
-
+        _predictionBody.Simulate(); 
         velocity = currentVel; // for reconcile payload
     }
 
+    private void HandleAttack(PlayerInputData input, bool isReplayed, ref PlayerMutableContext mut, ref Vector2 currentVel)
+    {
+        if (actionTickTimer <= 0 && input.attack1Pressed)
+        {
+            attack1Action.StartAction(input, _moverContext, ref mut, ref currentVel);
+        }
 
-
+        if (mut.actionTickTimer > 0) mut.actionTickTimer -= 1;
+    }
 
     public override void CreateReconcile()
     {
@@ -252,8 +189,9 @@ public class PlayerPrediction : TickNetworkBehaviour
             coyoteTimer,
             jumpBufferTimer,
             dashTimer,
-            shootTimer,
-            lookAngleDeg
+            actionTickTimer,
+            lookAngleDeg,
+            curAmmo
         );
 
         if (IsServerStarted || IsOwner)
@@ -270,7 +208,7 @@ public class PlayerPrediction : TickNetworkBehaviour
         coyoteTimer = rd.CoyoteTimer;
         jumpBufferTimer = rd.JumpBufferTimer;
         dashTimer = rd.DashTimer;
-        shootTimer = rd.ShootTimer;
+        actionTickTimer = rd.ActionTickTimer;
         lookAngleDeg = rd.LookAngleDeg;
 
 
@@ -296,7 +234,7 @@ public class PlayerPrediction : TickNetworkBehaviour
 
 
 
-    private void UpdateGrounded()
+    private bool UpdateGrounded()
     {
         if (groundCheck != null)
         {
@@ -307,12 +245,60 @@ public class PlayerPrediction : TickNetworkBehaviour
             // Fallback: small circle at feet (object's position)
             isGrounded = Physics2D.OverlapCircle(transform.position, groundCheckRadius, groundLayer);
         }
+
+        return isGrounded;
     }
 
     //NOTE:: this really doesn't belong here but because of reconciliation it's a lot easier to handle weapon cooldowns from within playerPrediction
     public void SetShotCooldown(float cd)
     {
-        shotCooldown = cd;
+        shotCooldownTicks = Mathf.RoundToInt(cd * (float)TimeManager.TickRate);
     }
 
+
+    private PlayerMutableContext GetMutableContext()
+    {
+        PlayerMutableContext mut = new PlayerMutableContext();
+        mut.jumpBufferTimer = jumpBufferTimer;
+        mut.coyoteTimer = coyoteTimer;
+        mut.dashTimer = dashTimer;
+        mut.actionTickTimer = actionTickTimer;
+        mut.curAmmo = curAmmo;
+
+        return mut;
+    }
+    private void UpdateMoverContext(uint lastReplicateTick, bool isReplayed)
+    {
+        _moverContext.rdTick = unchecked((int)lastReplicateTick);
+        _moverContext.dt = (float)TimeManager.TickDelta;
+        _moverContext.isReplayed = isReplayed;
+        
+        _moverContext.facing = (Mathf.Abs(lookAngleDeg) > 90f) ? -1 : 1;
+
+        _moverContext.isGrounded = UpdateGrounded();
+    }
+
+    private void UpdateVisuals()
+    {
+        if (_moverContext.facing == 1)
+        {
+            _spriteRenderer.flipX = false;
+            _weaponController.SetWeaponInverted(false);
+        }
+        else
+        {
+            _spriteRenderer.flipX = true;
+            _weaponController.SetWeaponInverted(true);
+        }
+
+        if (_weaponSlot)
+            _weaponSlot.localRotation = Quaternion.Euler(0f, 0f, lookAngleDeg);
+
+        _animator.SetFloat("speed", Mathf.Abs(rb.velocity.x));
+    }
+
+    public void SetAmmo(int ammo) //THIS WILL CAUSE AN ISSUE IF CALLED VIA MOVER OR PLAYERACTION, BECAUSE IT WILL GET OVERWRITTEN BY MUT
+    {
+        curAmmo = ammo;
+    }
 }

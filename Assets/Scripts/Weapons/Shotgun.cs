@@ -19,11 +19,8 @@ public class Shotgun : MonoBehaviour, IWeapon
     [SerializeField] private int pelletCount = 1;                // number of pellets per shot
     [SerializeField] private float spreadDegrees = 10f;      // full cone width (e.g., 12° => ±6°)
     [SerializeField] private float speedVariance = 3f;      // full cone width (e.g., 12° => ±6°)
-    [SerializeField] private float muzzleBackOffset = 0f;    // push muzzle slightly back if needed
     [SerializeField] private float recoilForce = 20f;    // push muzzle slightly back if needed
-    [SerializeField] private int cooldown = 70;    // push muzzle slightly back if needed
 
-    private int _lastShotTick = 0;
 
 
     // Injected at runtime
@@ -52,8 +49,9 @@ public class Shotgun : MonoBehaviour, IWeapon
     /// Called by WeaponController after it has passed ROF/ammo gating.
     /// Owner can show VFX immediately; server actually spawns pellets.
     /// </summary>
-    public Vector2 TryFire(int tick, Vector2 aimDir, bool isReplayed, ref Vector2 currentVel) 
+    public int TryFire(int tick, Vector2 aimDir, bool isReplayed, ref Vector2 currentVel) 
     {
+        int ammoUsed = isReplayed ? 0 : 1;
         Vector2 muzzlePos = muzzle ? (Vector2)muzzle.position : (Vector2)transform.position;
 
         float baseAngleDeg = Mathf.Atan2(aimDir.y, aimDir.x) * Mathf.Rad2Deg;
@@ -72,7 +70,7 @@ public class Shotgun : MonoBehaviour, IWeapon
         {
             Debug.Log("TryFire playing animation");
             _audioSource.Play();
-            _animator.SetTrigger("Shoot");
+            _animator.SetTrigger("Shoot"); //NOTE:: clients currently don't play animation from other clients, need a serverRPC to trigger animation/sound or something. TryFire is only called on client and owner because it comes from Replicate
         }
 
         Vector2 recoilVector = aimDir.normalized * -recoilForce;
@@ -84,7 +82,7 @@ public class Shotgun : MonoBehaviour, IWeapon
 
         currentVel += new Vector2(xRecoil, yRecoil);
 
-        return (aimDir.normalized * -recoilForce);
+        return ammoUsed;
     }
 
 
