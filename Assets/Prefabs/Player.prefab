@@ -213,6 +213,7 @@ GameObject:
   - component: {fileID: 6342522965552757232}
   - component: {fileID: 5591299619436837026}
   - component: {fileID: 7553638154412514335}
+  - component: {fileID: 6313826131102823271}
   - component: {fileID: 6334494470691060050}
   - component: {fileID: 9119370960578803621}
   - component: {fileID: 4529705971619973587}
@@ -371,7 +372,8 @@ MonoBehaviour:
   _addedNetworkObject: {fileID: 3609502783418812458}
   _networkObjectCache: {fileID: 3609502783418812458}
   _healthBar: {fileID: 8676628287244791505}
-  maxHealth: 100
+  _maxHealth: 100
+  _hudManager: {fileID: 0}
 --- !u!114 &3609502783418812458
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -460,6 +462,7 @@ MonoBehaviour:
   _networkObjectCache: {fileID: 3609502783418812458}
   WeaponSlot: {fileID: 650437906321976197}
   curWeapon: {fileID: 0}
+  cooldownSeconds: 0
   shooterCollider: {fileID: 5293277161617394531}
 --- !u!114 &6342522965552757232
 MonoBehaviour:
@@ -505,6 +508,8 @@ MonoBehaviour:
   _weaponSlot: {fileID: 650437906321976197}
   _sprite: {fileID: 0}
   attack1Action: {fileID: 7553638154412514335}
+  reloadAction: {fileID: 6313826131102823271}
+  shotCooldownTicks: 0
   _spriteRenderer: {fileID: 1504467717052157785}
   _animator: {fileID: 3386449771726580695}
   _movers:
@@ -524,7 +529,21 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   tickDuration: 0
-  assignedId: 0
+  assignedId: 1
+--- !u!114 &6313826131102823271
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7355313910414173693}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bcc4415ff59c1af4086416f2cd60fdf6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  tickDuration: 0
+  assignedId: 2
 --- !u!114 &6334494470691060050
 MonoBehaviour:
   m_ObjectHideFlags: 0

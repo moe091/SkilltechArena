@@ -9,7 +9,8 @@ public class PlayerController : NetworkBehaviour, IHittable
     private WeaponController _weaponController;
 
     [SerializeField] private HealthBar _healthBar;
-    [SerializeField] private int maxHealth = 100;
+    [SerializeField] private int _maxHealth = 100;
+    [SerializeField] private HUDManager _hudManager;
     private readonly SyncVar<int> _health = new();
 
     void Awake()
@@ -17,15 +18,15 @@ public class PlayerController : NetworkBehaviour, IHittable
         _weaponController = GetComponent<WeaponController>();
         _prediction = GetComponent<PlayerPrediction>();
 
-        _healthBar.SetMaxHealth(maxHealth);
-        _healthBar.SetHealth(maxHealth);
+        _healthBar.SetMaxHealth(_maxHealth);
+        _healthBar.SetHealth(_maxHealth);
 
         _health.OnChange += OnHealthChanged;
     }
 
     public override void OnStartServer()
     {
-        _health.Value = maxHealth; // server initializes
+        _health.Value = _maxHealth; // server initializes
     }
 
 
@@ -73,7 +74,6 @@ public class PlayerController : NetworkBehaviour, IHittable
     {
         Debug.Log("Player has become Died!");
     }
-
 
 
 

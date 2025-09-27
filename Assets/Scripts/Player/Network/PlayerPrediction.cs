@@ -35,6 +35,7 @@ public class PlayerPrediction : TickNetworkBehaviour
 
     [Header("Actions")] 
     public PlayerActionBase attack1Action;
+    public PlayerActionBase reloadAction;
 
 
     [Header("Other")]
@@ -49,9 +50,12 @@ public class PlayerPrediction : TickNetworkBehaviour
     private float lookAngleDeg;
     private int curAmmo;
 
+    private int actionBufferTicks = 20;
+
     private PlayerMoverContext _moverContext = new PlayerMoverContext();
     private uint _lastReplicateTick;
     private PredictionRigidbody2D _predictionBody = new();
+    private PlayerActionBase _currentAction = null;
 
     private PlayerController _playerController;
     private WeaponController _weaponController;
@@ -70,7 +74,6 @@ public class PlayerPrediction : TickNetworkBehaviour
         _weaponController = GetComponent<WeaponController>();
         _stats = GetComponent<PlayerStats>();
 
-        attack1Action?.Initialize(this);
     }
 
     public override void OnStartNetwork()
@@ -140,6 +143,7 @@ public class PlayerPrediction : TickNetworkBehaviour
         Vector2 currentVel = rb.velocity;
 
         
+        //TODO:: move this into "HandleMovers" function to make things nice and clean
         for (int i = 0; i < _movers.Length; i++)
         {
             var mover = _movers[i];
@@ -147,7 +151,7 @@ public class PlayerPrediction : TickNetworkBehaviour
                 mover.DoMovement(input, _moverContext, ref mut, ref currentVel);
         }
 
-        HandleAttack(input, state.HasFlag(ReplicateState.Replayed), ref mut, ref currentVel);
+        HandleActions(input, state.HasFlag(ReplicateState.Replayed), ref mut, ref currentVel);
 
         jumpBufferTimer = mut.jumpBufferTimer;
         coyoteTimer = mut.coyoteTimer;
@@ -170,15 +174,68 @@ public class PlayerPrediction : TickNetworkBehaviour
         velocity = currentVel; // for reconcile payload
     }
 
-    private void HandleAttack(PlayerInputData input, bool isReplayed, ref PlayerMutableContext mut, ref Vector2 currentVel)
+    private void HandleActions(PlayerInputData input, bool isReplayed, ref PlayerMutableContext mut, ref Vector2 currentVel)
     {
-        if (actionTickTimer <= 0 && input.attack1Pressed)
+        int now = unchecked((int)TimeManager.Tick);
+
+        // 1) Record edge inputs into per-action buffers.
+        //    If pressed again while already buffered, extend the buffer (keep the later deadline).
+        if (input.attack1Pressed)
+            attack1Action.bufferedUntil = Mathf.Max(attack1Action.bufferedUntil, now + actionBufferTicks);
+
+        if (input.reloadPressed)
+            reloadAction.bufferedUntil = Mathf.Max(reloadAction.bufferedUntil, now + actionBufferTicks);
+
+        // 2) If the shared action gate just opened, finish the previous action.
+        if (mut.actionTickTimer <= 0 && _currentAction != null)
         {
-            attack1Action.StartAction(input, _moverContext, ref mut, ref currentVel);
+            _currentAction.EndAction(input, _moverContext, ref mut, ref currentVel);
+            _currentAction = null;
         }
 
-        if (mut.actionTickTimer > 0) mut.actionTickTimer -= 1;
+        // 3) If idle, try to start something.
+        if (mut.actionTickTimer <= 0)
+        {
+            // Priority: attack, then reload. Check buffered windows first.
+            // Start when buffer is still valid (>= now). If start succeeds, consume buffer.
+            if (attack1Action.bufferedUntil >= now)
+            {
+                if (attack1Action.StartAction(input, _moverContext, ref mut, ref currentVel))
+                {
+                    attack1Action.bufferedUntil = -1;   // consume
+                    _currentAction = attack1Action;
+                    goto TickDown;
+                }
+                // If StartAction failed (e.g., no ammo), keep buffer until it expires.
+            }
+
+            if (reloadAction.bufferedUntil >= now)
+            {
+                if (reloadAction.StartAction(input, _moverContext, ref mut, ref currentVel))
+                {
+                    reloadAction.bufferedUntil = -1;    // consume
+                    _currentAction = reloadAction;
+                    goto TickDown;
+                }
+            }
+
+            // (Optional) If you want non-buffered immediate starts too, you could also
+            // try direct edges here; but because we set buffers on edges above,
+            // those edges are already covered by the buffered checks.
+        }
+
+    TickDown:
+        // 4) Tick the shared gate down on the mutable state.
+        if (mut.actionTickTimer > 0)
+            mut.actionTickTimer -= 1;
+
+        // (Optional) Expire old buffers; harmless to leave them, but this keeps things tidy.
+        if (attack1Action.bufferedUntil < now)
+            attack1Action.bufferedUntil = -1;
+        if (reloadAction.bufferedUntil < now)
+            reloadAction.bufferedUntil = -1;
     }
+
 
     public override void CreateReconcile()
     {

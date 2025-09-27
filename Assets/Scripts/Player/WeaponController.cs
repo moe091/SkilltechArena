@@ -18,16 +18,15 @@ public class WeaponController : NetworkBehaviour
     private readonly SyncVar<WeaponId> _equippedId = new SyncVar<WeaponId>();
     private IWeapon _weapon;
     private PlayerPrediction _playerPrediction;
+    private PlayerController _playerController;
     [SerializeField] public Collider2D shooterCollider;   // assign your player's main collider
-
-
-    public Sprite ammoIcon;
 
     private void Awake()
     {
         // Subscribe to change notifications (server & clients)
         _equippedId.OnChange += OnEquippedIdChanged;
         _playerPrediction = GetComponent<PlayerPrediction>();
+        _playerController = GetComponent<PlayerController>();
     }
 
     /// <summary>
@@ -98,7 +97,7 @@ public class WeaponController : NetworkBehaviour
         if (curWeapon != null)
         {
             _playerPrediction.SetAmmo(curWeapon.maxAmmo);
-            ammoIcon = curWeapon.ammoIcon;
+            GameManager.HUDManager.UpdateVisual(curWeapon.HUDIcon, curWeapon.ammoIcon, curWeapon.maxAmmo, curWeapon.maxAmmo);
         }
         RebuildView();
 
@@ -129,6 +128,21 @@ public class WeaponController : NetworkBehaviour
             SpriteRenderer _sprite = _viewInstance.GetComponent<SpriteRenderer>();
             if (_sprite) _sprite.flipY = invert;
         }
+    }
+
+    public float GetReloadDuration()
+    {
+        if (_weapon == null)
+        {
+            return 0f;
+        }
+
+        return _weapon.GetReloadDuration();
+    }
+
+    public void PlayReloadSound()
+    {
+        _weapon.PlayReloadSound();
     }
 
 }

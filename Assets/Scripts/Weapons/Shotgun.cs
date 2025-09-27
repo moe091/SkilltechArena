@@ -20,6 +20,7 @@ public class Shotgun : MonoBehaviour, IWeapon
     [SerializeField] private float spreadDegrees = 10f;      // full cone width (e.g., 12° => ±6°)
     [SerializeField] private float speedVariance = 3f;      // full cone width (e.g., 12° => ±6°)
     [SerializeField] private float recoilForce = 20f;    // push muzzle slightly back if needed
+    [SerializeField] private float reloadDuration = 1.7f;    // push muzzle slightly back if needed
 
 
 
@@ -27,6 +28,7 @@ public class Shotgun : MonoBehaviour, IWeapon
     private WeaponController _controller;
     private Animator _animator;
     [SerializeField] private AudioClip shootSfx;
+    [SerializeField] private AudioClip reloadSfx;
     private AudioSource _audioSource;
     private PredictionManager _predict;
 
@@ -68,8 +70,7 @@ public class Shotgun : MonoBehaviour, IWeapon
         }
         if (!isReplayed)
         {
-            Debug.Log("TryFire playing animation");
-            _audioSource.Play();
+            if (shootSfx != null) _audioSource.PlayOneShot(shootSfx);
             _animator.SetTrigger("Shoot"); //NOTE:: clients currently don't play animation from other clients, need a serverRPC to trigger animation/sound or something. TryFire is only called on client and owner because it comes from Replicate
         }
 
@@ -84,7 +85,6 @@ public class Shotgun : MonoBehaviour, IWeapon
 
         return ammoUsed;
     }
-
 
 
 
@@ -106,4 +106,13 @@ public class Shotgun : MonoBehaviour, IWeapon
         Random.state = prev;
     }
 
+    public float GetReloadDuration()
+    {
+        return reloadDuration;
+    }
+
+    public void PlayReloadSound()
+    {
+        if (reloadSfx != null) _audioSource.PlayOneShot(reloadSfx);
+    }
 }

@@ -18,6 +18,7 @@ public class WeaponDefinition : ScriptableObject
     public string displayName = "Shotgun";
     public Sprite icon;                       // for UI
     public Sprite ammoIcon;
+    public Sprite HUDIcon;
     public GameObject viewPrefab;             // visual-only prefab to mount on the player (sprite, muzzle FX, etc.)
 
     [Header("Tuning (gameplay)")]

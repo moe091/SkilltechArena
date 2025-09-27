@@ -1,14 +1,19 @@
 using UnityEngine;
 
-public class WeaponAttackAction : PlayerActionBase
+public class ReloadAction : PlayerActionBase
 {
     PlayerPrediction _pp;
     WeaponController _weapon;
+
+    [SerializeField] private AudioClip reloadSound;
+    [SerializeField] private AudioSource sfxSource; // optional; will be created if not set
+
 
     private void Awake()
     {
         _pp = GetComponent<PlayerPrediction>();
         _weapon = GetComponent<WeaponController>();
+        sfxSource = GetComponent<AudioSource>();
     }
 
 
@@ -16,17 +21,18 @@ public class WeaponAttackAction : PlayerActionBase
     //The main difference between actions and movers is that actions are bound to a single key and they work off of the shared action timer(can't shoot and reload at the same time, for example).
     public override bool StartAction(PlayerInputData input, PlayerMoverContext context, ref PlayerMutableContext mut, ref Vector2 currentVel)
     {
+        if (_weapon == null || _weapon.curWeapon == null || mut.curAmmo == _weapon.curWeapon.maxAmmo) 
+            return false;
 
-        if (mut.curAmmo > 0)
-        {
-            mut.actionTickTimer = Mathf.RoundToInt(_weapon.cooldownSeconds * (float)_pp.TimeManager.TickRate); // <---- THIS IS LINE 28
-            mut.curAmmo -= _weapon.TryFire(context.rdTick, input.lookAngleDeg, context.isReplayed, ref currentVel);
-            GameManager.HUDManager.SetAmmoAmount(mut.curAmmo);
+        int maxAmmo = (_weapon.curWeapon != null) ? _weapon.curWeapon.maxAmmo : 0;
+        int reloadTicks = Mathf.Max(1, Mathf.RoundToInt(_weapon.GetReloadDuration() * (float)_pp.TimeManager.TickRate));
 
-            return true;
-        }
+        mut.actionTickTimer = reloadTicks;
 
-        return false;
+        if (_pp.IsOwner && !context.isReplayed)
+            _weapon.PlayReloadSound();
+
+        return true;
     }
 
     //Called each tick while the action is active(between button press and the end of its duration). This may be needed for some actions, e.g. if I have a "gattling gun" ability that rapid-fires for the whole duration and also
@@ -40,7 +46,8 @@ public class WeaponAttackAction : PlayerActionBase
     //called when action completes, for actions that have effects at the end of their duration(e.g. reload only sets curAmmo=maxAmmo after it's duration ends)
     public override void EndAction(PlayerInputData input, PlayerMoverContext context, ref PlayerMutableContext mut, ref Vector2 currentVel)
     {
-
+        Debug.Log("[ReloadAction.EndAction] Reload action complete!");
+        mut.curAmmo = _weapon.curWeapon.maxAmmo;
+        GameManager.HUDManager.SetAmmoAmount(mut.curAmmo);
     }
-
 }
