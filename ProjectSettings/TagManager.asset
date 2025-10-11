@@ -14,7 +14,7 @@ TagManager:
   - 
   - 
   - 
-  - 
+  - Players
   - groundLayer
   - Projectiles
   - Feet
@@ -43,6 +43,9 @@ TagManager:
     locked: 0
   - name: Default
     uniqueID: 0
+    locked: 0
+  - name: DynamicFG
+    uniqueID: 3716600711
     locked: 0
   - name: Player
     uniqueID: 1656492647

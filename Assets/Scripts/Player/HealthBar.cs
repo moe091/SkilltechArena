@@ -24,7 +24,6 @@ public class HealthBar : MonoBehaviour
     {
         if (_maxHealth <= 0) return;
 
-        Debug.Log($"[HealthBar] SetHealth({value}). MaxHealth={_maxHealth}, CurHealth={_curHealth}.  cur/max={_curHealth / (float)_maxHealth} \n\n");
         _curHealth = value;
         foreground.fillAmount = _curHealth / (float)_maxHealth;
     }

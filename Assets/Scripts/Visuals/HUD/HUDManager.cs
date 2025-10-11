@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
@@ -96,5 +97,10 @@ public class HUDManager : MonoBehaviour
 
             _ammoImages.Add(img);
         }
+    }
+
+    internal void SetGrenadeCount(int next)
+    {
+        Debug.Log("Current Grenade Count = " + next);
     }
 }

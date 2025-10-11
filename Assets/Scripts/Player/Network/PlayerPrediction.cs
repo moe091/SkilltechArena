@@ -1,4 +1,5 @@
 ﻿using FishNet.Object.Prediction;
+using FishNet.Object.Synchronizing;
 using FishNet.Transporting;
 using FishNet.Utility.Template;
 using System;
@@ -35,6 +36,7 @@ public class PlayerPrediction : TickNetworkBehaviour
 
     [Header("Actions")] 
     public PlayerActionBase attack1Action;
+    public PlayerActionBase attack2Action;
     public PlayerActionBase reloadAction;
 
 
@@ -65,6 +67,7 @@ public class PlayerPrediction : TickNetworkBehaviour
     [SerializeField] private PlayerMoverBase[] _movers;
 
 
+
     private void Awake()
     {
         _inputCollector = GetComponent<PlayerInputCollector>();
@@ -73,8 +76,8 @@ public class PlayerPrediction : TickNetworkBehaviour
         _playerController = GetComponent<PlayerController>();
         _weaponController = GetComponent<WeaponController>();
         _stats = GetComponent<PlayerStats>();
-
     }
+
 
     public override void OnStartNetwork()
     {
@@ -183,8 +186,13 @@ public class PlayerPrediction : TickNetworkBehaviour
         if (input.attack1Pressed)
             attack1Action.bufferedUntil = Mathf.Max(attack1Action.bufferedUntil, now + actionBufferTicks);
 
+        if (input.attack2Pressed)
+            attack2Action.bufferedUntil = Mathf.Max(attack2Action.bufferedUntil, now + actionBufferTicks);
+
         if (input.reloadPressed)
             reloadAction.bufferedUntil = Mathf.Max(reloadAction.bufferedUntil, now + actionBufferTicks);
+
+
 
         // 2) If the shared action gate just opened, finish the previous action.
         if (mut.actionTickTimer <= 0 && _currentAction != null)
@@ -192,6 +200,7 @@ public class PlayerPrediction : TickNetworkBehaviour
             _currentAction.EndAction(input, _moverContext, ref mut, ref currentVel);
             _currentAction = null;
         }
+
 
         // 3) If idle, try to start something.
         if (mut.actionTickTimer <= 0)
@@ -204,6 +213,17 @@ public class PlayerPrediction : TickNetworkBehaviour
                 {
                     attack1Action.bufferedUntil = -1;   // consume
                     _currentAction = attack1Action;
+                    goto TickDown;
+                }
+                // If StartAction failed (e.g., no ammo), keep buffer until it expires.
+            }
+
+            if (attack2Action.bufferedUntil >= now)
+            {
+                if (attack2Action.StartAction(input, _moverContext, ref mut, ref currentVel))
+                {
+                    attack2Action.bufferedUntil = -1;   // consume
+                    _currentAction = attack2Action;
                     goto TickDown;
                 }
                 // If StartAction failed (e.g., no ammo), keep buffer until it expires.

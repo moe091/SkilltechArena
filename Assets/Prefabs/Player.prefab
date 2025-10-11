@@ -211,13 +211,15 @@ GameObject:
   - component: {fileID: -5153842734717028670}
   - component: {fileID: 7679394185837892520}
   - component: {fileID: 6342522965552757232}
+  - component: {fileID: 2644564671461333698}
   - component: {fileID: 5591299619436837026}
   - component: {fileID: 7553638154412514335}
   - component: {fileID: 6313826131102823271}
   - component: {fileID: 6334494470691060050}
   - component: {fileID: 9119370960578803621}
   - component: {fileID: 4529705971619973587}
-  m_Layer: 0
+  - component: {fileID: 4617636661633400837}
+  m_Layer: 9
   m_Name: Player
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -396,6 +398,7 @@ MonoBehaviour:
   - {fileID: 3852160304569234684}
   - {fileID: -5153842734717028670}
   - {fileID: 7679394185837892520}
+  - {fileID: 2644564671461333698}
   - {fileID: 5591299619436837026}
   InitializedParentNetworkBehaviour: {fileID: 0}
   InitializedNestedNetworkObjects: []
@@ -421,7 +424,7 @@ MonoBehaviour:
   _spectatorInterpolation: 2
   _enableTeleport: 0
   _teleportThreshold: 1
-  <PrefabId>k__BackingField: 5
+  <PrefabId>k__BackingField: 6
   <SpawnableCollectionId>k__BackingField: 0
   <AssetPathHash>k__BackingField: 7807759643866311769
   <SceneId>k__BackingField: 0
@@ -482,6 +485,22 @@ MonoBehaviour:
   airAcceleration: 80
   airDeceleration: 30
   gravity: -40
+--- !u!114 &2644564671461333698
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7355313910414173693}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e472c8e0cf36dc54b91d7df527ae39e3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _componentIndexCache: 3
+  _addedNetworkObject: {fileID: 3609502783418812458}
+  _networkObjectCache: {fileID: 3609502783418812458}
+  grenadePrefab: {fileID: 4801893598332609257, guid: 59ea8ec8fa619fb4ca288f1a7784efe9, type: 3}
 --- !u!114 &5591299619436837026
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -494,7 +513,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 139f18a1c8903aa4cb5000e8c68e733c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _componentIndexCache: 3
+  _componentIndexCache: 4
   _addedNetworkObject: {fileID: 3609502783418812458}
   _networkObjectCache: {fileID: 3609502783418812458}
   _tickCallbacks: 6
@@ -508,6 +527,7 @@ MonoBehaviour:
   _weaponSlot: {fileID: 650437906321976197}
   _sprite: {fileID: 0}
   attack1Action: {fileID: 7553638154412514335}
+  attack2Action: {fileID: 4617636661633400837}
   reloadAction: {fileID: 6313826131102823271}
   shotCooldownTicks: 0
   _spriteRenderer: {fileID: 1504467717052157785}
@@ -530,6 +550,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   tickDuration: 0
   assignedId: 1
+  bufferedUntil: -1
 --- !u!114 &6313826131102823271
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -544,6 +565,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   tickDuration: 0
   assignedId: 2
+  bufferedUntil: -1
+  reloadSound: {fileID: 0}
+  sfxSource: {fileID: 0}
 --- !u!114 &6334494470691060050
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -587,6 +611,25 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 23d3e7ab66e93ae429c204e6e2d1fddb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &4617636661633400837
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7355313910414173693}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4d5bff5cf3d5f0a449227f0de3060a3a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  tickDuration: 15
+  assignedId: 3
+  bufferedUntil: -1
+  reloadSound: {fileID: 0}
+  sfxSource: {fileID: 0}
+  xOffset: 1
+  yOffset: 1
 --- !u!1 &9070429809011806828
 GameObject:
   m_ObjectHideFlags: 0
