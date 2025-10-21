@@ -6,6 +6,7 @@ public class HorizontalDashMover : PlayerMoverBase
 {
     public float dashSpeed = 38f;
     public float dashDuration = 0.2f;
+    public float dashCooldown = 5f;
 
 
     public override void DoMovement(PlayerInputData input, PlayerMoverContext context, ref PlayerMutableContext mut, ref Vector2 currentVel)

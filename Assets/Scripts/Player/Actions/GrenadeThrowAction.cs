@@ -29,6 +29,7 @@ public class GrenadeThrowAction : PlayerActionBase
             return false;
         }
 
+        Debug.Log($"{_grenades.GrenadesLeft} Grenades left. Throwing one!");
         mut.actionTickTimer = tickDuration;
 
         if (!context.isReplayed)

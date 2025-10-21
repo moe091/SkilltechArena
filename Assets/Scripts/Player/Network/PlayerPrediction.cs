@@ -102,6 +102,8 @@ public class PlayerPrediction : TickNetworkBehaviour
         var follower = cam.GetComponent<CameraFollow>();
         if (!follower) follower = cam.gameObject.AddComponent<CameraFollow>();
         follower.target = transform; // follow this local player's transform
+
+        GameManager.HUDManager.InitSecondaryAbil("UI/HUD/GrenadeHUD");
     }
 
     protected override void TimeManager_OnTick()

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
 
 public class HUDManager : MonoBehaviour
 {
@@ -10,6 +11,13 @@ public class HUDManager : MonoBehaviour
     [SerializeField] private RectTransform ammoPanel;    // top row container
     [SerializeField] private Image weaponImage;          // image to show the current weapon
 
+    [Header("Secondary Ability")]
+    [SerializeField] private RectTransform secondaryAbilRoot;
+    [SerializeField] private Image secondaryIcon;
+    [SerializeField] private Image secondaryMask;
+    [SerializeField] private TextMeshProUGUI secondaryText;
+
+
     [Header("Visuals")]
     [Range(0f, 1f)]
     [SerializeField] private float spentAlpha = 0.5f;    // opacity for spent ammo icons
@@ -17,6 +25,55 @@ public class HUDManager : MonoBehaviour
     private readonly List<Image> _ammoImages = new List<Image>();
     private Sprite _currentAmmoSprite;
     private int _currentMaxAmmo;
+
+
+    public void InitSecondaryAbil(string resourcePath)
+    {
+        if (secondaryAbilRoot == null)
+        {
+            Debug.Log("[HUDManager.INitSecondaryAbil] secondaryAbilRoot not set, unable to initialize HUD");
+            return;
+        }
+
+        Sprite sprite = Resources.Load<Sprite>(resourcePath);
+        if (secondaryIcon != null)
+        {
+            secondaryIcon.sprite = sprite;
+            secondaryIcon.enabled = sprite != null;
+        }
+        if (secondaryMask != null)
+        {
+            secondaryMask.sprite = sprite;
+            secondaryMask.enabled = sprite != null;
+        }
+
+        secondaryAbilRoot.gameObject.SetActive(sprite != null);
+        SetSecondaryCooldownVisuals(0f, 0f);
+
+    }
+
+
+    public void UpdateSecondaryAbility(int curCharges, float timeRemaining, float maxTime)
+    {
+        Debug.Log($"Secondary Ability Cooldown: charges={curCharges}, cd={timeRemaining}, maxCD={maxTime}");
+        float t = (maxTime > 0f && timeRemaining != maxTime) ? Mathf.Clamp01(timeRemaining / maxTime) : 0f;
+        secondaryMask.fillAmount = t;
+
+        secondaryText.text = curCharges.ToString();
+    }
+
+    private void SetSecondaryCooldownVisuals(float cooldown, float maxCooldown)
+    {
+        if (secondaryMask != null)
+            secondaryMask.fillAmount = (maxCooldown > 0f) ? Mathf.Clamp01(cooldown / maxCooldown) : 0f;
+
+        if (secondaryText != null)
+            secondaryText.text = "";
+    }
+
+
+
+
 
     /// <summary>
     /// Updates weapon icon, (re)creates ammo icons to match maxAmmo, and sets their opacity based on curAmmo.
@@ -69,6 +126,8 @@ public class HUDManager : MonoBehaviour
         }
     }
 
+
+
     // --- helpers ---
 
     private void RebuildAmmoRow(Sprite ammoSprite, int maxAmmo)
@@ -101,6 +160,6 @@ public class HUDManager : MonoBehaviour
 
     internal void SetGrenadeCount(int next)
     {
-        Debug.Log("Current Grenade Count = " + next);
+        //Debug.Log("Current Grenade Count = " + next);
     }
 }
