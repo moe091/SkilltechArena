@@ -586,6 +586,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   dashSpeed: 38
   dashDuration: 0.2
+  dashCooldown: 2
 --- !u!114 &9119370960578803621
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -632,8 +633,8 @@ MonoBehaviour:
   bufferedUntil: -1
   reloadSound: {fileID: 0}
   sfxSource: {fileID: 0}
-  xOffset: 1
-  yOffset: 1
+  xOffset: 1.2
+  yOffset: 0
 --- !u!1 &9070429809011806828
 GameObject:
   m_ObjectHideFlags: 0

@@ -104,6 +104,7 @@ public class PlayerPrediction : TickNetworkBehaviour
         follower.target = transform; // follow this local player's transform
 
         GameManager.HUDManager.InitSecondaryAbil("UI/HUD/GrenadeHUD");
+        GameManager.HUDManager.InitDashAbil("UI/HUD/DashHUD");
     }
 
     protected override void TimeManager_OnTick()

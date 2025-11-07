@@ -17,6 +17,12 @@ public class HUDManager : MonoBehaviour
     [SerializeField] private Image secondaryMask;
     [SerializeField] private TextMeshProUGUI secondaryText;
 
+    [Header("Dash Ability")]
+    [SerializeField] private RectTransform dashRoot;
+    [SerializeField] private Image dashIcon;
+    [SerializeField] private Image dashMask;
+    [SerializeField] private TextMeshProUGUI dashText;
+
 
     [Header("Visuals")]
     [Range(0f, 1f)]
@@ -27,6 +33,64 @@ public class HUDManager : MonoBehaviour
     private int _currentMaxAmmo;
 
 
+
+    // ============================
+    // DASH ABILITY
+    // ============================
+
+    #region Dash Ability
+    public void InitDashAbil(string resourcePath)
+    {
+        if (dashRoot == null)
+        {
+            Debug.Log("[HUDManager.InitDashAbil] dashRoot not set, unable to initialize HUD");
+            return;
+        }
+
+        Sprite sprite = Resources.Load<Sprite>(resourcePath);
+        if (dashIcon != null)
+        {
+            dashIcon.sprite = sprite;
+            dashIcon.enabled = sprite != null;
+        }
+        if (dashMask != null)
+        {
+            dashMask.sprite = sprite;
+            dashMask.enabled = sprite != null;
+        }
+
+        dashRoot.gameObject.SetActive(sprite != null);
+        SetDashCooldownVisuals(0f, 0f);
+    }
+
+
+    public void UpdateDashAbility(float timeRemaining, float maxTime)
+    {
+        float t = (maxTime > 0f && timeRemaining != maxTime) ? Mathf.Clamp01(timeRemaining / maxTime) : 0f;
+        dashMask.fillAmount = t;
+
+        if (dashText != null)
+        {
+            // optional text display (countdown or blank)
+            dashText.text = (timeRemaining > 0f && timeRemaining < maxTime)
+                ? Mathf.CeilToInt(timeRemaining).ToString()
+                : string.Empty;
+        }
+    }
+
+
+    private void SetDashCooldownVisuals(float cooldown, float maxCooldown)
+    {
+        if (dashMask != null)
+            dashMask.fillAmount = (maxCooldown > 0f) ? Mathf.Clamp01(cooldown / maxCooldown) : 0f;
+
+        if (dashText != null)
+            dashText.text = "";
+    }
+    #endregion  
+
+
+    #region SecondaryAbility
     public void InitSecondaryAbil(string resourcePath)
     {
         if (secondaryAbilRoot == null)
@@ -55,7 +119,6 @@ public class HUDManager : MonoBehaviour
 
     public void UpdateSecondaryAbility(int curCharges, float timeRemaining, float maxTime)
     {
-        Debug.Log($"Secondary Ability Cooldown: charges={curCharges}, cd={timeRemaining}, maxCD={maxTime}");
         float t = (maxTime > 0f && timeRemaining != maxTime) ? Mathf.Clamp01(timeRemaining / maxTime) : 0f;
         secondaryMask.fillAmount = t;
 
@@ -71,10 +134,11 @@ public class HUDManager : MonoBehaviour
             secondaryText.text = "";
     }
 
+    #endregion
 
 
 
-
+    #region Ammo
     /// <summary>
     /// Updates weapon icon, (re)creates ammo icons to match maxAmmo, and sets their opacity based on curAmmo.
     /// </summary>
@@ -157,6 +221,10 @@ public class HUDManager : MonoBehaviour
             _ammoImages.Add(img);
         }
     }
+
+    #endregion
+
+
 
     internal void SetGrenadeCount(int next)
     {

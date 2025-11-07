@@ -296,7 +296,8 @@ MonoBehaviour:
   <ComponentIndex>k__BackingField: 0
   <PredictedSpawn>k__BackingField: {fileID: 0}
   <PredictedOwner>k__BackingField: {fileID: 0}
-  NetworkBehaviours: []
+  NetworkBehaviours:
+  - {fileID: 1112797384835207304}
   InitializedParentNetworkBehaviour: {fileID: 0}
   InitializedNestedNetworkObjects: []
   RuntimeParentNetworkBehaviour: {fileID: 0}
@@ -321,15 +322,15 @@ MonoBehaviour:
   _spectatorInterpolation: 2
   _enableTeleport: 0
   _teleportThreshold: 1
-  <PrefabId>k__BackingField: 65535
+  <PrefabId>k__BackingField: 0
   <SpawnableCollectionId>k__BackingField: 0
   <AssetPathHash>k__BackingField: 2894377909705787653
   <SceneId>k__BackingField: 0
   SerializedTransformProperties:
-    Position: {x: 0, y: 0, z: 0}
-    Rotation: {x: 0, y: 0, z: 0, w: 0}
-    Scale: {x: 0, y: 0, z: 0}
-    IsValid: 0
+    Position: {x: -0.35, y: -3.33, z: -0.049058292}
+    Rotation: {x: 0, y: 0, z: 0, w: 1}
+    Scale: {x: 1, y: 1, z: 1}
+    IsValid: 1
 --- !u!114 &1112797384835207304
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -342,9 +343,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c3ac4bf55b5a78340ad789f5880d48d8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _componentIndexCache: 255
+  _componentIndexCache: 0
   _addedNetworkObject: {fileID: 6610822250058697874}
-  _networkObjectCache: {fileID: 0}
+  _networkObjectCache: {fileID: 6610822250058697874}
   weaponDef: {fileID: 11400000, guid: 3b2662b2097cd614b9191f390bd074d7, type: 2}
   prompt: {fileID: 689957659626829088}
   interactKey: 101
