@@ -29,8 +29,12 @@ public class NetworkAutoStarter : MonoBehaviour
         Debug.Log("[NetworkStarter.BootNextFrame] Launching. mode = " + LaunchConfig.NextMode);
         switch (LaunchConfig.NextMode)
         {
+            case LaunchConfig.Mode.Server:
+                StartHostAndPublish(false); // host + publish (single entry point)
+                break;
+
             case LaunchConfig.Mode.Host:
-                StartHostAndPublish(); // host + publish (single entry point)
+                StartHostAndPublish(true); // host + publish (single entry point)
                 break;
 
             case LaunchConfig.Mode.Client:
@@ -51,12 +55,19 @@ public class NetworkAutoStarter : MonoBehaviour
     /// Starts FishNet as server + local client, then (optionally) creates one Firebase lobby row.
     /// Also starts a simple heartbeat that updates 'updatedAt'.
     /// </summary>
-    async void StartHostAndPublish()
+    async void StartHostAndPublish(bool asHost)
     {
-        // Start server + local client.
-        InstanceFinder.ServerManager.StartConnection();
-        InstanceFinder.ClientManager.StartConnection();
-        Debug.Log("[NetworkAutoStarter] Started as HOST (server + local client).");
+        if (asHost)
+        {
+            InstanceFinder.ServerManager.StartConnection();
+            InstanceFinder.ClientManager.StartConnection();
+            Debug.Log("[NetworkAutoStarter] Started as HOST (server + local client).");
+        } else
+        {
+            InstanceFinder.ServerManager.StartConnection();
+            Debug.Log("[NetworkAutoStarter] Started as SERVER (no local client).");
+        }
+
 
         if (firebase == null)
         {

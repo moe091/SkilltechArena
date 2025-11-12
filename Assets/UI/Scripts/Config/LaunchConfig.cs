@@ -1,6 +1,6 @@
 public static class LaunchConfig
 {
-    public enum Mode { None, Host, Client }
+    public enum Mode { None, Host, Client, Server }
 
     // --- Connection / mode ---
     public static Mode NextMode = Mode.None;

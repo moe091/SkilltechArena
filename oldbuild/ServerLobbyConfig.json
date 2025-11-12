@@ -1,0 +1,12 @@
+{
+  "lobbyName": "Aeon Homies Network Test",
+  "region": "US East",
+  "maxPlayers": 8,
+  "matchLength": 600,
+  "transitionLength": 30,
+  "map": "Test Arena 0",
+  "publicIP": "3.22.145.187",
+  "port": 7777,
+  "autoStart": true,
+  "databaseUrl": "https://aeonarena-818d8-default-rtdb.firebaseio.com"
+}
