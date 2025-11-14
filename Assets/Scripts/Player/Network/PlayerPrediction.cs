@@ -13,6 +13,14 @@ using UnityEngine.Windows;
 /// //////////////// NEXT UP: Route curAmmo through CSP/ReplicateState.
 /// //////////////// THEN: Rework weaponController? Or just implement grenades, not using weaponController, and figure out a better way. Then change regular weapons to work the same way.
 /// </summary>
+public enum BufferedActionType : byte
+{
+    None = 0,
+    Attack1 = 1,
+    Attack2 = 2,
+    Reload = 3,
+    // add more if needed
+}
 
 
 public class PlayerPrediction : TickNetworkBehaviour
@@ -52,7 +60,9 @@ public class PlayerPrediction : TickNetworkBehaviour
     private float lookAngleDeg;
     private int curAmmo;
 
-    private int actionBufferTicks = 20;
+    private int actionBufferTicks = 20; //number of ticks to buffer actions for
+    private BufferedActionType _bufferedAction = BufferedActionType.None; //type of action currently buffered
+    private sbyte _bufferedActionTicks = 0;   // counter to track ticks remaining for currently buffered action
 
     private PlayerMoverContext _moverContext = new PlayerMoverContext();
     private uint _lastReplicateTick;
@@ -187,7 +197,11 @@ public class PlayerPrediction : TickNetworkBehaviour
         // 1) Record edge inputs into per-action buffers.
         //    If pressed again while already buffered, extend the buffer (keep the later deadline).
         if (input.attack1Pressed)
-            attack1Action.bufferedUntil = Mathf.Max(attack1Action.bufferedUntil, now + actionBufferTicks);
+        {
+            _bufferedActionTicks = (sbyte)Mathf.Max(_bufferedActionTicks, actionBufferTicks);
+            _bufferedAction = BufferedActionType.Attack1;
+        }
+
 
         if (input.attack2Pressed)
             attack2Action.bufferedUntil = Mathf.Max(attack2Action.bufferedUntil, now + actionBufferTicks);
@@ -205,17 +219,17 @@ public class PlayerPrediction : TickNetworkBehaviour
         }
 
 
+        bool startedThisTick = false;
         // 3) If idle, try to start something.
         if (mut.actionTickTimer <= 0)
         {
-            // Priority: attack, then reload. Check buffered windows first.
-            // Start when buffer is still valid (>= now). If start succeeds, consume buffer.
-            if (attack1Action.bufferedUntil >= now)
+            if (_bufferedActionTicks > 0) // TODO:: implement buffering for other actions. This if will need to have: && bufferType = attack1
             {
                 if (attack1Action.StartAction(input, _moverContext, ref mut, ref currentVel))
                 {
-                    attack1Action.bufferedUntil = -1;   // consume
+                    _bufferedActionTicks = 0;
                     _currentAction = attack1Action;
+                    startedThisTick = true;
                     goto TickDown;
                 }
                 // If StartAction failed (e.g., no ammo), keep buffer until it expires.
@@ -247,12 +261,19 @@ public class PlayerPrediction : TickNetworkBehaviour
             // those edges are already covered by the buffered checks.
         }
 
-    TickDown:
+        if (!isReplayed && !startedThisTick && _bufferedActionTicks > 0)
+        {
+            _bufferedActionTicks--;
+            if (_bufferedActionTicks < 0)
+                _bufferedActionTicks = 0;
+        }
+
+        TickDown:
         // 4) Tick the shared gate down on the mutable state.
         if (mut.actionTickTimer > 0)
             mut.actionTickTimer -= 1;
 
-        // (Optional) Expire old buffers; harmless to leave them, but this keeps things tidy.
+        //not really necessary, expire old buffers.
         if (attack1Action.bufferedUntil < now)
             attack1Action.bufferedUntil = -1;
         if (reloadAction.bufferedUntil < now)
@@ -271,7 +292,8 @@ public class PlayerPrediction : TickNetworkBehaviour
             dashTimer,
             actionTickTimer,
             lookAngleDeg,
-            curAmmo
+            curAmmo,
+            _bufferedActionTicks
         );
 
         if (IsServerStarted || IsOwner)
@@ -291,6 +313,10 @@ public class PlayerPrediction : TickNetworkBehaviour
         actionTickTimer = rd.ActionTickTimer;
         lookAngleDeg = rd.LookAngleDeg;
 
+        curAmmo = rd.CurAmmo;
+        GameManager.HUDManager.SetAmmoAmount(curAmmo);
+
+        _bufferedActionTicks = rd.ActionBufferTicks;
 
         int facing = (Mathf.Abs(lookAngleDeg) > 90f) ? -1 : 1;
 

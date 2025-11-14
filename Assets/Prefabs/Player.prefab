@@ -504,7 +504,7 @@ MonoBehaviour:
   throwStrength: 50
   maxGrenades: 2
   rechargeSeconds: 5
-  lifetime: 1
+  lifetime: 0.9
 --- !u!114 &5591299619436837026
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -633,7 +633,7 @@ MonoBehaviour:
   bufferedUntil: -1
   reloadSound: {fileID: 0}
   sfxSource: {fileID: 0}
-  xOffset: 1.2
+  xOffset: 1.4
   yOffset: 0
 --- !u!1 &9070429809011806828
 GameObject:

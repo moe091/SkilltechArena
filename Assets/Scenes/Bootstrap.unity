@@ -357,6 +357,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 17d1f90eac69dbf4c920a9585f2dca62, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  serverConfig:
+    lobbyName: 
+    region: 
+    maxPlayers: 0
+    matchLength: 0
+    transitionLength: 0
+    map: 
+    publicIP: 
+    port: 0
+    autoStart: 0
+    databaseUrl: 
 --- !u!114 &1407096214
 MonoBehaviour:
   m_ObjectHideFlags: 0

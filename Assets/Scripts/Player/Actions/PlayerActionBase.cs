@@ -6,6 +6,7 @@ public abstract class PlayerActionBase : MonoBehaviour
     public int tickDuration; //stores the duration of the action in ticks
     public int assignedId; //stores the unique ID used to identify instances of actions
     public int bufferedUntil = -1;
+    public int bufferedTicks = -1;
 
     private void Awake()
     {

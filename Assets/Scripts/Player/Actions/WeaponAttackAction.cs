@@ -16,7 +16,7 @@ public class WeaponAttackAction : PlayerActionBase
     //The main difference between actions and movers is that actions are bound to a single key and they work off of the shared action timer(can't shoot and reload at the same time, for example).
     public override bool StartAction(PlayerInputData input, PlayerMoverContext context, ref PlayerMutableContext mut, ref Vector2 currentVel)
     {
-
+        Debug.Log("[DEBUG][WeaponAttackAction] StartAction called. mut.curAmmo = " + mut.curAmmo);
         if (mut.curAmmo > 0)
         {
             mut.actionTickTimer = Mathf.RoundToInt(_weapon.cooldownSeconds * (float)_pp.TimeManager.TickRate); // <---- THIS IS LINE 28

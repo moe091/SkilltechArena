@@ -129,7 +129,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   <IsNested>k__BackingField: 0
-  WasActiveDuringEdit: 0
+  WasActiveDuringEdit: 1
   WasActiveDuringEdit_Set1: 1
   <ComponentIndex>k__BackingField: 0
   <PredictedSpawn>k__BackingField: {fileID: 0}
@@ -222,7 +222,7 @@ CircleCollider2D:
   m_GameObject: {fileID: 3144519401619955116}
   m_Enabled: 1
   m_Density: 1
-  m_Material: {fileID: 0}
+  m_Material: {fileID: 6200000, guid: eea247e7e7c0cd14eb3cd9314cf8b82e, type: 2}
   m_IncludeLayers:
     serializedVersion: 2
     m_Bits: 0

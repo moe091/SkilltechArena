@@ -17,11 +17,12 @@ public struct PlayerReconcileData : IReconcileData
     public int ActionTickTimer;
     public float LookAngleDeg;
     public int CurAmmo;
+    public sbyte ActionBufferTicks;
 
     // Required plumbing
     private uint _tick;
     public PlayerReconcileData(PredictionRigidbody2D body, Vector2 vel, bool grounded,
-                         float coyote, float jumpBuf, float dash, int actionTickTimer, float lookAngleDeg, int curAmmo)
+                         float coyote, float jumpBuf, float dash, int actionTickTimer, float lookAngleDeg, int curAmmo, sbyte actionBufferTicks)
     {
         Body = body;
         Velocity = vel;
@@ -32,6 +33,7 @@ public struct PlayerReconcileData : IReconcileData
         ActionTickTimer = actionTickTimer;
         LookAngleDeg = lookAngleDeg;
         CurAmmo = curAmmo;
+        ActionBufferTicks = actionBufferTicks;
         _tick = 0;
     }
     public void Dispose() { }
