@@ -74,8 +74,8 @@ SpriteRenderer:
   m_AutoUVMaxDistance: 0.5
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
-  m_SortingLayerID: 0
-  m_SortingLayer: 0
+  m_SortingLayerID: 1656492647
+  m_SortingLayer: 3
   m_SortingOrder: 0
   m_Sprite: {fileID: 21300000, guid: d1cb35b69fd4f48499195ce2b3bed3ed, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -479,7 +479,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 41d6e2e846fa88643b6ea2437a5727e9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  maxMoveSpeed: 15
+  maxMoveSpeed: 18
   acceleration: 120
   deceleration: 60
   airAcceleration: 80
@@ -501,10 +501,10 @@ MonoBehaviour:
   _addedNetworkObject: {fileID: 3609502783418812458}
   _networkObjectCache: {fileID: 3609502783418812458}
   grenadePrefab: {fileID: 4801893598332609257, guid: 59ea8ec8fa619fb4ca288f1a7784efe9, type: 3}
-  throwStrength: 50
-  maxGrenades: 2
-  rechargeSeconds: 5
-  lifetime: 0.9
+  throwStrength: 45
+  maxGrenades: 5
+  rechargeSeconds: 2
+  lifetime: 1.1
 --- !u!114 &5591299619436837026
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -555,6 +555,7 @@ MonoBehaviour:
   tickDuration: 0
   assignedId: 1
   bufferedUntil: -1
+  bufferedTicks: -1
 --- !u!114 &6313826131102823271
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -570,6 +571,7 @@ MonoBehaviour:
   tickDuration: 0
   assignedId: 2
   bufferedUntil: -1
+  bufferedTicks: -1
   reloadSound: {fileID: 0}
   sfxSource: {fileID: 0}
 --- !u!114 &6334494470691060050
@@ -631,6 +633,7 @@ MonoBehaviour:
   tickDuration: 15
   assignedId: 3
   bufferedUntil: -1
+  bufferedTicks: -1
   reloadSound: {fileID: 0}
   sfxSource: {fileID: 0}
   xOffset: 1.4
@@ -842,6 +845,10 @@ PrefabInstance:
     - target: {fileID: 3778472723969980793, guid: 96d140c4ce9556f46b6f243a5163d24c, type: 3}
       propertyPath: m_FillOrigin
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3925689665721732522, guid: 96d140c4ce9556f46b6f243a5163d24c, type: 3}
+      propertyPath: m_SortingLayerID
+      value: -2101683449
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

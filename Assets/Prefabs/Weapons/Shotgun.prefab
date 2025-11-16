@@ -75,7 +75,7 @@ SpriteRenderer:
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
   m_SortingLayerID: 1656492647
-  m_SortingLayer: 1
+  m_SortingLayer: 2
   m_SortingOrder: 5
   m_Sprite: {fileID: 1330592993, guid: e9a0e69105765cb43bccbaf9d2ac1453, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -126,8 +126,8 @@ MonoBehaviour:
   projectileSpeed: 45
   damage: 3
   pelletCount: 13
-  spreadDegrees: 12
-  speedVariance: 6
+  spreadDegrees: 6
+  speedVariance: 5
   recoilForce: 31
   reloadDuration: 2
   shootSfx: {fileID: 8300000, guid: 47ebc60abf9145e4c85e9d9ec9918947, type: 3}

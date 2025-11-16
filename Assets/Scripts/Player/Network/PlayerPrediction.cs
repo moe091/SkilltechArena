@@ -196,20 +196,24 @@ public class PlayerPrediction : TickNetworkBehaviour
 
         // 1) Record edge inputs into per-action buffers.
         //    If pressed again while already buffered, extend the buffer (keep the later deadline).
+        //    don't worry about order, player isn't pressing multiple buttons per tick anyway, and if they are then they get what they deserve
         if (input.attack1Pressed)
         {
             _bufferedActionTicks = (sbyte)Mathf.Max(_bufferedActionTicks, actionBufferTicks);
             _bufferedAction = BufferedActionType.Attack1;
         }
 
-
         if (input.attack2Pressed)
-            attack2Action.bufferedUntil = Mathf.Max(attack2Action.bufferedUntil, now + actionBufferTicks);
+        {
+            _bufferedActionTicks = (sbyte)Mathf.Max(_bufferedActionTicks, actionBufferTicks);
+            _bufferedAction = BufferedActionType.Attack2;
+        }
 
         if (input.reloadPressed)
-            reloadAction.bufferedUntil = Mathf.Max(reloadAction.bufferedUntil, now + actionBufferTicks);
-
-
+        {
+            _bufferedActionTicks = (sbyte)Mathf.Max(_bufferedActionTicks, actionBufferTicks);
+            _bufferedAction = BufferedActionType.Reload;
+        }
 
         // 2) If the shared action gate just opened, finish the previous action.
         if (mut.actionTickTimer <= 0 && _currentAction != null)
@@ -218,67 +222,58 @@ public class PlayerPrediction : TickNetworkBehaviour
             _currentAction = null;
         }
 
-
         bool startedThisTick = false;
+
         // 3) If idle, try to start something.
         if (mut.actionTickTimer <= 0)
         {
-            if (_bufferedActionTicks > 0) // TODO:: implement buffering for other actions. This if will need to have: && bufferType = attack1
+            if (_bufferedActionTicks > 0 && _bufferedAction != BufferedActionType.None)
             {
-                if (attack1Action.StartAction(input, _moverContext, ref mut, ref currentVel))
+                bool started = false;
+                switch (_bufferedAction)
                 {
+                    case BufferedActionType.Attack1: //duplicating logic for each type in case I want actionType specific logic later. I could just set PlayerActionBase nextAction = _bufferedAction and then do the logic on nextAction
+                        started = attack1Action.StartAction(input, _moverContext, ref mut, ref currentVel);
+                        if (started) _currentAction = attack1Action;
+                        break;
+
+                    case BufferedActionType.Attack2:
+                        started = attack2Action.StartAction(input, _moverContext, ref mut, ref currentVel);
+                        if (started) _currentAction = attack2Action;
+                        break;
+
+                    case BufferedActionType.Reload:
+                        started = reloadAction.StartAction(input, _moverContext, ref mut, ref currentVel);
+                        if (started) _currentAction = reloadAction;
+                        break;
+                }
+
+                if (started)
+                {
+                    _bufferedAction = BufferedActionType.None;
                     _bufferedActionTicks = 0;
-                    _currentAction = attack1Action;
                     startedThisTick = true;
                     goto TickDown;
                 }
-                // If StartAction failed (e.g., no ammo), keep buffer until it expires.
             }
-
-            if (attack2Action.bufferedUntil >= now)
-            {
-                if (attack2Action.StartAction(input, _moverContext, ref mut, ref currentVel))
-                {
-                    attack2Action.bufferedUntil = -1;   // consume
-                    _currentAction = attack2Action;
-                    goto TickDown;
-                }
-                // If StartAction failed (e.g., no ammo), keep buffer until it expires.
-            }
-
-            if (reloadAction.bufferedUntil >= now)
-            {
-                if (reloadAction.StartAction(input, _moverContext, ref mut, ref currentVel))
-                {
-                    reloadAction.bufferedUntil = -1;    // consume
-                    _currentAction = reloadAction;
-                    goto TickDown;
-                }
-            }
-
-            // (Optional) If you want non-buffered immediate starts too, you could also
-            // try direct edges here; but because we set buffers on edges above,
-            // those edges are already covered by the buffered checks.
         }
 
         if (!isReplayed && !startedThisTick && _bufferedActionTicks > 0)
         {
             _bufferedActionTicks--;
-            if (_bufferedActionTicks < 0)
+            if (_bufferedActionTicks <= 0)
+            {
                 _bufferedActionTicks = 0;
+                _bufferedAction = BufferedActionType.None;
+            }
         }
 
-        TickDown:
+    TickDown:
         // 4) Tick the shared gate down on the mutable state.
         if (mut.actionTickTimer > 0)
             mut.actionTickTimer -= 1;
-
-        //not really necessary, expire old buffers.
-        if (attack1Action.bufferedUntil < now)
-            attack1Action.bufferedUntil = -1;
-        if (reloadAction.bufferedUntil < now)
-            reloadAction.bufferedUntil = -1;
     }
+
 
 
     public override void CreateReconcile()
@@ -293,7 +288,8 @@ public class PlayerPrediction : TickNetworkBehaviour
             actionTickTimer,
             lookAngleDeg,
             curAmmo,
-            _bufferedActionTicks
+            _bufferedActionTicks,
+            _bufferedAction
         );
 
         if (IsServerStarted || IsOwner)
@@ -317,6 +313,7 @@ public class PlayerPrediction : TickNetworkBehaviour
         GameManager.HUDManager.SetAmmoAmount(curAmmo);
 
         _bufferedActionTicks = rd.ActionBufferTicks;
+        _bufferedAction = rd.BufferedAction;
 
         int facing = (Mathf.Abs(lookAngleDeg) > 90f) ? -1 : 1;
 

@@ -41,14 +41,41 @@ TagManager:
   - name: Background
     uniqueID: 2745773171
     locked: 0
+  - name: BG2_props
+    uniqueID: 2214164297
+    locked: 0
+  - name: BG3_props
+    uniqueID: 1612586881
+    locked: 0
+  - name: BG_front
+    uniqueID: 810131047
+    locked: 0
   - name: Default
     uniqueID: 0
+    locked: 0
+  - name: Behind_Platforms
+    uniqueID: 3063820465
+    locked: 0
+  - name: Platforms
+    uniqueID: 410637491
+    locked: 0
+  - name: Infront_Platforms
+    uniqueID: 1872539237
     locked: 0
   - name: DynamicFG
     uniqueID: 3716600711
     locked: 0
+  - name: Behind_Player
+    uniqueID: 345359077
+    locked: 0
   - name: Player
     uniqueID: 1656492647
+    locked: 0
+  - name: Infront_Player
+    uniqueID: 4222556395
+    locked: 0
+  - name: Front
+    uniqueID: 2056154189
     locked: 0
   - name: UI
     uniqueID: 2193283847
