@@ -102,13 +102,15 @@ public class LobbyBrowser : MonoBehaviour
             if (nm.ServerManager.Started) nm.ServerManager.StopConnection(true);
         }
 
-
         // Set launch mode for the gameplay scene auto-starter
         LaunchConfig.NextMode = LaunchConfig.Mode.Client;
         LaunchConfig.Address = r.addr;       // comes from the host’s published row
         LaunchConfig.Port = r.port;
 
         ConnectionWatchdog.Begin(timeoutSeconds: 4f, menuScene: "MainMenu");
+
+
+        Debug.Log("JOINING LOBBY: " + LaunchConfig.Address);
 
         SceneManager.LoadScene(gameplaySceneName);
     }

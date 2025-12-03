@@ -328,7 +328,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_ProtocolType: 0
-  m_UseWebSockets: 1
+  m_UseWebSockets: 0
   m_UseEncryption: 0
   m_MaxPacketQueueSize: 128
   m_MaxPayloadSize: 6144
@@ -337,9 +337,9 @@ MonoBehaviour:
   m_MaxConnectAttempts: 60
   m_DisconnectTimeoutMS: 30000
   ConnectionData:
-    Address: 127.0.0.1
+    Address: 0.0.0.0
     Port: 7777
-    ServerListenAddress: 
+    ServerListenAddress: 0.0.0.0
   DebugSimulator:
     PacketDelayMS: 0
     PacketJitterMS: 0
@@ -380,11 +380,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3fdaae44044276a49a52229c1597e33b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _updateOrder: 0
+  _updateOrder: 1
   _timingType: 0
   _allowTickDropping: 1
   _maximumFrameTicks: 3
-  _tickRate: 60
+  _tickRate: 120
   _pingInterval: 1
   _physicsMode: 1
 --- !u!114 &1407096215
@@ -402,7 +402,7 @@ MonoBehaviour:
   _dropExcessiveReplicates: 1
   _maximumServerReplicates: 15
   _createLocalStates: 1
-  _stateInterpolation: 2
+  _stateInterpolation: 1
   _stateOrder: 1
 --- !u!114 &1407096216
 MonoBehaviour:

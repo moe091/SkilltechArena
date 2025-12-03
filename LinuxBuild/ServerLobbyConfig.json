@@ -1,0 +1,12 @@
+{
+  "lobbyName": "AWS Isntance Lobby Test",
+  "region": "US East",
+  "maxPlayers": 8,
+  "matchLength": 600,
+  "transitionLength": 30,
+  "map": "Test Arena 0",
+  "publicIP": "54.221.180.40",
+  "port": 7777,
+  "autoStart": true,
+  "databaseUrl": "https://aeonarena-818d8-default-rtdb.firebaseio.com"
+}

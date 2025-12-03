@@ -6,7 +6,7 @@ using UnityEngine.SceneManagement;
 public class ServerAutostarter : MonoBehaviour
 {
     [SerializeField] private FirebaseLobbyDirectory lobbyDirectory;
-    [SerializeField] private string gameplaySceneName = "SampleScene";
+    [SerializeField] private string gameplaySceneName = "SampleScene"; //NOTE:: after I make actual maps, this will be read from _cfg.map, and each map will have it's own scene with matching name
 
     private SceneBootstrapper _bootstrap;
     private ServerLobbyConfig _cfg;
@@ -37,7 +37,9 @@ public class ServerAutostarter : MonoBehaviour
         LaunchConfig.Region = _cfg.region;
         LaunchConfig.MaxPlayers = _cfg.maxPlayers;
         LaunchConfig.Port = _cfg.port;
+        LaunchConfig.Address = _cfg.publicIP;
 
+        Debug.Log("[CreateLobbyButton] Creating lobby: " + LaunchConfig.Address);
         Debug.Log("[CreateLobbyButton] Loading Scene: " + gameplaySceneName);
         SceneManager.LoadScene(gameplaySceneName);
     }
