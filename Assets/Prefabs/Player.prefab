@@ -504,7 +504,7 @@ MonoBehaviour:
   throwStrength: 50
   maxGrenades: 5
   rechargeSeconds: 1
-  lifetime: 0.9
+  lifetime: 1
 --- !u!114 &5591299619436837026
 MonoBehaviour:
   m_ObjectHideFlags: 0

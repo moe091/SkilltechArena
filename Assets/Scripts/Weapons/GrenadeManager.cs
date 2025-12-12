@@ -118,12 +118,11 @@ public class GrenadeManager : NetworkBehaviour //GrenadeManager is a per-player 
         float rad = aimDeg * Mathf.Deg2Rad;
 
         Debug.Log("THROWING GRENADE AT ANGLE: " + rad);
-        //rb.velocity = new Vector2((Mathf.Cos(rad) * throwStrength) + (vel.x * 0.2f), (Mathf.Sin(rad) * throwStrength) + (vel.y * 0.2f)); // Add Player velocity to throw
-        rb.velocity = new Vector2((Mathf.Cos(rad) * throwStrength), (Mathf.Sin(rad) * throwStrength)); // Ignore player velocity
+        rb.velocity = new Vector2((Mathf.Cos(rad) * throwStrength) + (vel.x * 0.5f), (Mathf.Sin(rad) * throwStrength) + (vel.y * 0.5f)); // Add Player velocity to throw
+        //rb.velocity = new Vector2((Mathf.Cos(rad) * throwStrength), (Mathf.Sin(rad) * throwStrength)); // Ignore player velocity
+        Debug.Log($"Grenade vel: {Mathf.Cos(rad) * throwStrength}, {(Mathf.Sin(rad) * throwStrength)}");
 
         DecreaseGrenadeCount();
-
-        Debug.Log("Threw a grenade. grenades left = " + GrenadesLeft);
 
     }
 }
