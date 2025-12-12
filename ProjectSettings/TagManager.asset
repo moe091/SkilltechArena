@@ -18,8 +18,8 @@ TagManager:
   - groundLayer
   - Projectiles
   - Feet
-  - 
-  - 
+  - DynamicNoPlayerCollision
+  - DynamicPlayerCollision
   - 
   - 
   - 

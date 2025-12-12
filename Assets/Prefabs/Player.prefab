@@ -501,10 +501,10 @@ MonoBehaviour:
   _addedNetworkObject: {fileID: 3609502783418812458}
   _networkObjectCache: {fileID: 3609502783418812458}
   grenadePrefab: {fileID: 4801893598332609257, guid: 59ea8ec8fa619fb4ca288f1a7784efe9, type: 3}
-  throwStrength: 45
+  throwStrength: 50
   maxGrenades: 5
-  rechargeSeconds: 2
-  lifetime: 1.1
+  rechargeSeconds: 1
+  lifetime: 0.9
 --- !u!114 &5591299619436837026
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -636,7 +636,7 @@ MonoBehaviour:
   bufferedTicks: -1
   reloadSound: {fileID: 0}
   sfxSource: {fileID: 0}
-  xOffset: 1.4
+  xOffset: 1
   yOffset: 0
 --- !u!1 &9070429809011806828
 GameObject:

@@ -15,7 +15,7 @@ GameObject:
   - component: {fileID: 4711381372683591492}
   - component: {fileID: 359182779349348870}
   - component: {fileID: 1531333400579806427}
-  m_Layer: 0
+  m_Layer: 13
   m_Name: Grenade
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -76,7 +76,7 @@ SpriteRenderer:
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
   m_SortingLayerID: -578366585
-  m_SortingLayer: 1
+  m_SortingLayer: 4
   m_SortingOrder: 0
   m_Sprite: {fileID: 21300000, guid: 14b0e6162504c424daeb7143f55a8919, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -104,7 +104,7 @@ Rigidbody2D:
   m_Mass: 0.001
   m_LinearDrag: 0.15
   m_AngularDrag: 0.1
-  m_GravityScale: 4
+  m_GravityScale: 8
   m_Material: {fileID: 6200000, guid: f0ee25b8bf0231f49bde304bf7c82f65, type: 2}
   m_IncludeLayers:
     serializedVersion: 2
@@ -129,7 +129,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   <IsNested>k__BackingField: 0
-  WasActiveDuringEdit: 1
+  WasActiveDuringEdit: 0
   WasActiveDuringEdit_Set1: 1
   <ComponentIndex>k__BackingField: 0
   <PredictedSpawn>k__BackingField: {fileID: 0}
